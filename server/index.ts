@@ -46,7 +46,7 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  if(url.pathname!=='/api/sync'||request.method!=='POST')return json({error:'Not found.'},404);
  if(Number(request.headers.get('content-length'))>2500000)return json({error:'Request too large.'},413);
  const body:any=await request.json();if(!Array.isArray(body.operations)||body.operations.length>100)return json({error:'Invalid batch.'},400);
- const existing=await env.DB.prepare('SELECT COUNT(*) AS count FROM records').first<{count:number}>();if(!existing?.count&&role==='admin'){await env.DB.batch(seedRecords().map(r=>env.DB.prepare('INSERT OR IGNORE INTO records(entity,record_key,value,revision) VALUES(?,?,?,?)').bind(r.entity,r.key,JSON.stringify(r.value),r.revision)));}
+ const existing=await env.DB.prepare('SELECT COUNT(*) AS count FROM records').first<{count:number}>();if(!existing?.count&&role==='admin'){await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO schedule_lock(id,revision) VALUES(1,0)'),...seedRecords().map(r=>env.DB.prepare('INSERT OR IGNORE INTO records(entity,record_key,value,revision) VALUES(?,?,?,?)').bind(r.entity,r.key,JSON.stringify(r.value),r.revision))]);}
  let all=await records(env.DB);const accepted:string[]=[],conflicts:{id:string;message:string}[]=[];
  for(const op of body.operations as Operation[]){
  const scheduleOperation=op.entity==='schedules'||op.entity==='overrides';

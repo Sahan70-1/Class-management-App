@@ -31,8 +31,8 @@ src/
   store.ts       IndexedDB cache, persistent outbox, sync and conflict review
 server/
   index.ts       Authenticated Worker API, permissions, validation and D1 sync
-migrations/
-  0001_initial.sql  Schema for members, records, events and timetable lock
+db/schema.ts    Drizzle schema for members, records, events and timetable lock
+drizzle/        Generated schema-only SQL, snapshot and migration journal
 public/
   sw.js          Offline application shell (never caches API/auth requests)
   manifest.webmanifest
@@ -99,3 +99,5 @@ The deployment target is a Cloudflare Worker module (`dist/server/index.js`) wit
 - The default seed is clearly labeled fictional data. Replace the sample dataset before entering live student records.
 - The supplied grade groups, rooms and fee amounts are initial configuration in `src/seed.ts`; broader class/fee setup, data import, account recovery, installments, SMS and WhatsApp messaging are future extensions.
 - Photos are resized locally to 256px JPEGs and synchronized with the student record; there is no R2 upload dependency in this initial version.
+
+A ZIP of the exact committed source is served at `/classroom-source.zip` behind the private Site access boundary. It excludes dependencies, Git metadata, local databases, credentials, and build output. Build from a committed checkout to keep this source download aligned with the release.
