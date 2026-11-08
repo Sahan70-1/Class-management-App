@@ -1,4 +1,6 @@
-# Classroom — attendance, fees & tutes
+# Class-management-App
+
+## Classroom — attendance, fees & tutes
 
 A mobile-first offline PWA for one tutor and their attendance team. The UI follows the supplied teal, navy and white references, with **Today**, **Scan**, **Students**, and **Reports** tabs. Desktop adds a sidebar, monthly calendar, and timetable overview. All starting records are fictional sample data.
 
