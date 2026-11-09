@@ -96,7 +96,7 @@ The deployment target is a Cloudflare Worker module (`dist/server/index.js`) wit
 
 ## Initial-version boundaries
 
-- No browser visual QA was available in the authoring environment; TypeScript, domain and local database/API checks are the validation baseline.
+- Local production browser checks pass at mobile and desktop widths, including the four tabs, class/free-time dialogs, registration, profile, QR, and sync dialog. Two isolated Chromium sessions also verify changes propagate both ways.
 - Offline use requires one successful load in a secure browser and adequate browser storage.
 - The default seed is clearly labeled fictional data. Replace the sample dataset before entering live student records.
 - The supplied grade groups, rooms and fee amounts are initial configuration in `src/seed.ts`; broader class/fee setup, data import, account recovery, installments, SMS and WhatsApp messaging are future extensions.
@@ -111,3 +111,11 @@ The client sends its last successfully merged `lastSeq` (zero for a first sync).
 The browser merges deltas and reapplies pending outbox operations in order. Cursor, cache, and outbox acknowledgements commit in one IndexedDB transaction. Empty, malformed, or count-mismatched caches and invalid/ahead cursors recover with a full snapshot. Discarding a conflict requests a full snapshot to restore the authoritative server value. No delete API is added: a future deletion must atomically append an event and remove the record. Direct database edits without events require a full refresh.
 
 Optional two-browser integration check: install `playwright-core` separately, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs`, run the local production preview on port 8787, then run `node scripts/check-two-browsers.mjs`. It uses two isolated Chromium contexts, edits lesson titles through the UI in both directions, verifies a one-record delta and empty idle delta, and compares local caches. `CHROMIUM_PATH` can select an installed Chromium binary. Screenshots go to the ignored `work/` directory. This check uses only fictional local data.
+
+## UI source layout
+
+`src/main.tsx` only loads CSS and mounts `App`. `src/App.tsx` owns the existing state, action handlers and tab/dialog wiring. The four tab views, sync/activity/profile dialogs, QR card and scanner, schedule/calendar views, navigation and shared UI each live in `src/components/`. Shared download behavior lives in `src/utils.ts`; navigation labels and types live in `src/navigation.ts`. Component moves retain the original handlers, CSS classes, model/store exports and API behavior.
+
+The formatting pass and individual extractions are separate commits. State and mutation/report handlers stay together in `App.tsx` to preserve their shared closures and ordering. No view was skipped. After the split, production JavaScript is 479.60 kB (155.79 kB gzip), versus 476.89 kB (152.25 kB gzip) before; CSS remains exactly 52.71 kB (11.60 kB gzip).
+
+With the same optional Playwright setup as the sync check, `node scripts/check-ui.mjs` runs the mobile/desktop UI smoke checks against the local production preview. It checks page errors and horizontal overflow and saves screenshots under `work/`.
