@@ -268,7 +268,9 @@ export function TodayTab({
               if (!c) return null;
               const count = students.filter((s) => s.classId === c.id).length;
               const marked = attendance.filter(
-                (a) => a.sessionId === session.id,
+                (a) =>
+                  a.sessionId === session.id &&
+                  students.some((s) => s.id === a.studentId),
               ).length;
               return (
                 <article
@@ -494,7 +496,11 @@ export function TodayTab({
                 (t) => t.classId === c.id && t.month === month,
               );
               const total = students.filter((s) => s.classId === c.id).length;
-              const count = issues.filter((i) => i.tuteId === t?.id).length;
+              const count = issues.filter(
+                (i) =>
+                  i.tuteId === t?.id &&
+                  students.some((s) => s.id === i.studentId),
+              ).length;
               return (
                 <div className="tute-mini" key={c.id}>
                   <div>

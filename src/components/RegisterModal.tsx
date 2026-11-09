@@ -69,6 +69,7 @@ export function RegisterModal({
       : grade.padStart(2, "0") + "-" + id.slice(-6);
     try {
       await onSave({
+        ...existing,
         id,
         name: name.trim(),
         phone,

@@ -6,7 +6,9 @@ import {
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+import { useStudentRemoval } from "../useStudentRemoval";
+import { type Role } from "../model";
 import {
   monthOf,
   type ClassGroup,
@@ -18,6 +20,7 @@ import {
 import { Avatar } from "./Avatar";
 import { Badge } from "./Badge";
 export function StudentsTab({
+  role,
   query,
   setQuery,
   filter,
@@ -31,6 +34,7 @@ export function StudentsTab({
   fees,
   issues,
 }: {
+  role: Role;
   query: string;
   setQuery: React.Dispatch<React.SetStateAction<string>>;
   filter: string;
@@ -44,6 +48,11 @@ export function StudentsTab({
   fees: Fee[];
   issues: Issue[];
 }) {
+  const [showRemoved, setShowRemoved] = useState(false);
+  const removal = useStudentRemoval(role);
+  const visible = students.filter(
+    (s) => !s.removedAt || (role === "admin" && showRemoved),
+  );
   return (
     <>
       <div className="directory-toolbar">
@@ -76,13 +85,28 @@ export function StudentsTab({
           Manage tutes
         </button>
       </div>
+      {role === "admin" && (
+        <label className="form-hint">
+          <input
+            type="checkbox"
+            checked={showRemoved}
+            onChange={(e) => setShowRemoved(e.target.checked)}
+          />{" "}
+          Show removed students
+        </label>
+      )}
+      {removal.error && (
+        <p role="alert" className="callout warning">
+          {removal.error}
+        </p>
+      )}
       <div className="panel student-directory">
         <div className="directory-header">
           <h3>
             Student directory{" "}
             <span className="count-pill">
               {
-                students.filter((s) => filter === "all" || s.classId === filter)
+                visible.filter((s) => filter === "all" || s.classId === filter)
                   .length
               }
             </span>
@@ -101,7 +125,7 @@ export function StudentsTab({
               </tr>
             </thead>
             <tbody>
-              {students
+              {visible
                 .filter(
                   (s) =>
                     (filter === "all" || s.classId === filter) &&
@@ -127,7 +151,10 @@ export function StudentsTab({
                           <Avatar student={s} />
                           <span>
                             <strong>{s.name}</strong>
-                            <small>{s.id}</small>
+                            <small>
+                              {s.id}
+                              {s.removedAt ? " · Removed" : ""}
+                            </small>
                           </span>
                         </button>
                       </td>
@@ -178,6 +205,15 @@ export function StudentsTab({
                       </td>
                       <td>
                         <div className="row-actions">
+                          {role === "admin" && s.removedAt && (
+                            <button
+                              className="button white"
+                              disabled={removal.busy}
+                              onClick={() => void removal.change(s, false)}
+                            >
+                              Restore
+                            </button>
+                          )}
                           <button
                             className="icon-button"
                             aria-label={"View QR for " + s.name}
@@ -206,7 +242,7 @@ export function StudentsTab({
             </tbody>
           </table>
         </div>
-        {!students.some(
+        {!visible.some(
           (s) =>
             (filter === "all" || s.classId === filter) &&
             (s.name + " " + s.id + " " + s.phone + " " + s.parentPhone)

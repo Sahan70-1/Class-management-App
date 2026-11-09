@@ -1,18 +1,18 @@
 import {seedRecords} from '../src/seed';
-import {canWrite,validateClass,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Schedule,type Override} from '../src/model';
+import {canWrite,validateClass,validateStudentRemoval,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Schedule,type Override} from '../src/model';
 interface Env { DB:D1Database; ASSETS:Fetcher; LOCAL_DEMO?:string; INITIAL_ADMIN_EMAIL?:string }
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const validDate=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!isNaN(Date.parse(v));
 const validTime=(v:unknown)=>typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 async function records(db:D1Database):Promise<StoredRecord[]>{const result=await db.prepare('SELECT entity, record_key AS key, value, revision FROM records').all();return result.results.map((r:any)=>({...r,value:JSON.parse(r.value)}));}
-function validate(op:Operation,all:StoredRecord[],role:Role):string|null{
+function validate(op:Operation,all:StoredRecord[],role:Role,actor:string):string|null{
  if(!op||typeof op.id!=='string'||op.id.length>100||typeof op.key!=='string'||op.key.length>250||!op.value||op.key!==op.value.id||!Number.isInteger(op.baseRevision)||JSON.stringify(op.value).length>650000)return 'Invalid operation.';
- if(!canWrite(role,op.entity,all.some(r=>r.entity===op.entity&&r.key===op.key)))return 'Your role does not allow this operation.';
+ if(!canWrite(role,op.entity,all.some(r=>r.entity===op.entity&&r.key===op.key),op.value))return 'Your role does not allow this operation.';
  const v:any=op.value;
- if(op.entity==='students'){if(typeof v.name!=='string'||!v.name.trim()||v.name.length>100||!/^S-[A-Za-z0-9-]+$/.test(v.id)||!values(all,'classes').some(c=>c.id===v.classId))return 'Student name, stable ID and class are required.';if(v.photo&&!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v.photo))return 'Photo must be a JPEG, PNG or WebP image.';}
+ if(op.entity==='students'){const removalError=validateStudentRemoval(v,values(all,'students').find(s=>s.id===v.id),role,actor);if(removalError)return removalError;if(typeof v.name!=='string'||!v.name.trim()||v.name.length>100||!/^S-[A-Za-z0-9-]+$/.test(v.id)||!values(all,'classes').some(c=>c.id===v.classId))return 'Student name, stable ID and class are required.';if(v.photo&&!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v.photo))return 'Photo must be a JPEG, PNG or WebP image.';}
  if(op.entity==='classes'){const error=validateClass(v);if(error)return error;}
  if(['attendance','fees','issues'].includes(op.entity)){
- const student=values(all,'students').find(s=>s.id===v.studentId);if(!student)return 'Student does not exist.';
+ const student=values(all,'students').find(s=>s.id===v.studentId);if(!student)return 'Student does not exist.';if(student.removedAt&&!all.some(r=>r.entity===op.entity&&r.key===op.key))return 'This student has been removed. Restore the student before recording new attendance, fees or tute issues.';
  if(op.entity==='attendance'){const session=sessionsFor(v.date,values(all,'schedules'),values(all,'overrides')).find(s=>s.id===v.sessionId);if(!validDate(v.date)||!session||session.cancelled||session.classId!==student.classId||v.classId!==session.classId||v.id!==student.id+'@'+session.id)return 'Attendance needs an active session in the student’s class.';}
  if(op.entity==='fees'){const c=values(all,'classes').find(c=>c.id===v.classId);if(!c||student.classId!==c.id||!/^\d{4}-(0[1-9]|1[0-2])$/.test(v.month)||v.amount!==c.fee||v.id!==student.id+'@'+c.id+'@'+v.month||!['Cash','Bank transfer'].includes(v.method))return 'Payment must match the selected class monthly fee.';}
  if(op.entity==='issues'){const t=values(all,'tutes').find(t=>t.id===v.tuteId);if(!t||t.classId!==student.classId||v.id!==student.id+'@'+t.id)return 'Tute must belong to the student’s class.';}
@@ -53,7 +53,7 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  const epoch=scheduleOperation?(await env.DB.prepare('SELECT revision FROM schedule_lock WHERE id=1').first<{revision:number}>())!.revision:0;
  if(scheduleOperation)all=await records(env.DB);
  if(op&&typeof op.id==='string'&&canWrite(role,op.entity)){const duplicate=await env.DB.prepare('SELECT 1 FROM events WHERE operation_id=? AND actor=?').bind(op.id,email).first();if(duplicate){accepted.push(op.id);continue;}}
- const error=validate(op,all,role);if(error){conflicts.push({id:op?.id||'unknown',message:error});continue;}
+ const error=validate(op,all,role,email);if(error){conflicts.push({id:op?.id||'unknown',message:error});continue;}
 
  const current=all.find(r=>r.entity===op.entity&&r.key===op.key);
  if(['attendance','fees','issues'].includes(op.entity)&&current){accepted.push(op.id);continue;}

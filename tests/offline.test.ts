@@ -52,5 +52,19 @@ test('offline action is durable, independent, retained on failure, and acknowled
  (navigator as any).onLine=true;
  respond([],5,{conflicts:[{id:queued.id,message:'Newer record'}]});await store.sync();assert.equal((await db.get('records','students:S-00001')).value.name,'Optimistic');assert.equal(await db.count('outbox'),1);
  respond(seedRecords(),5,{full:true});await store.discardConflict(queued.id);assert.equal(sent.lastSeq,0);assert.equal(await db.count('outbox'),0);assert.equal((await db.get('records','students:S-00001')).value.name,latest.value.name);
+
+ // Offline removal stays durable and returns through the ordinary incremental merge.
+ respond([],5,{role:'admin',email:'tutor@local.demo'});await store.sync();
+ (navigator as any).onLine=false;
+ const pupil=await db.get('records','students:S-00002');
+ const removed={...pupil.value,removedAt:new Date().toISOString(),removedBy:'tutor@local.demo'};
+ for(const role of ['staff','viewer'] as const)await assert.rejects(()=>store.mutate('students',removed,role),/role/);
+ const history=(await db.getAll('records')).filter(r=>['attendance','fees','issues'].includes(r.entity));
+ await store.mutate('students',removed,'admin');assert.equal(await db.count('outbox'),1);assert.equal((await db.get('records','students:S-00002')).value.removedAt,removed.removedAt);
+ await store.initialize();assert.ok((store.getSnapshot().records.find(r=>r.key==='S-00002')!.value as any).removedAt);
+ await assert.rejects(()=>store.mutate('attendance',{...attendance,id:'new',studentId:'S-00002'},'admin'),/removed/);
+ const removal=(await db.getAll('outbox'))[0];respond([{entity:'students',key:removed.id,value:removed,revision:pupil.revision+1}],6,{accepted:[removal.id],role:'admin',email:'tutor@local.demo'});
+ (navigator as any).onLine=true;await store.sync();assert.equal(sent.lastSeq,5);assert.equal(sent.operations.length,1);assert.equal(await db.count('outbox'),0);assert.equal(await db.get('meta','lastSeq'),6);
+ assert.deepEqual((await db.getAll('records')).filter(r=>['attendance','fees','issues'].includes(r.entity)),history);
  db.close();globalThis.setInterval=interval;
 });

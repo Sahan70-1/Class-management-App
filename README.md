@@ -86,8 +86,8 @@ The tutor adds member email/role in **Workspace settings**, then separately gran
 
 | Role | Permissions |
 | --- | --- |
-| Tutor / admin | Students, schedules, tute titles, members, check-in, payments, issuance, reports |
-| Attendance staff | Register students; add/edit classes, timetables and tute titles; record attendance, fees and tute issues; view reports |
+| Tutor / admin | Register/edit students; remove/restore students; manage classes, schedules, tute titles and members; check-in, payments, issuance and reports |
+| Attendance staff | Register new students; add/edit classes, timetables and tute titles; record attendance, fees and tute issues; view reports. Cannot edit existing students or remove/restore them. |
 | Read-only viewer | Read records, view and export reports; no mutations |
 
 The admin role preview only reduces UI permissions; it cannot grant a staff/viewer account additional server permissions. Hosted requests require the Sites-authenticated email header and an existing membership. API responses are not cached. No external messages or payment processing are performed.
@@ -128,3 +128,13 @@ Admin and attendance staff can add or edit a class from **Today → Manage class
 Staff may register new students but editing an existing student and managing workspace members remain admin-only. Staff can also edit day/weekly timetables, create extra sessions, cancel sessions, and edit monthly tute titles. Changes use the existing durable outbox, revision checks and schedule overlap protection. Registration retries are idempotent for the original authenticated author.
 
 **Open class** opens a session overview with class details, date/time, fee, attendance list and present/not-marked/total counts. Counts are specific to that session, include current enrollees and students already marked before a class transfer, and include pending local changes. **Start scanning** explicitly switches to Scan with that session selected. Opening the overview does not record attendance, payment or tute issuance; cancelled sessions and read-only viewers cannot start scanning from it.
+
+## Removing a student
+
+Only admins can remove a student from their profile after confirming the student's name. Removal stores `removedAt` and the signed-in admin's `removedBy` on the student; no student or attendance, fee, or tute-issue record is deleted. Admins can enable **Show removed students** in Students and choose **Restore**. Editing other details preserves removal status. Staff and viewers cannot remove, restore, or register a student with removal metadata. Server membership, rather than the UI role preview, controls permission.
+
+Removed students disappear from active directories, check-in search, rosters, session overviews and active counts. Scanning their QR shows “This student has been removed”; new attendance, payments and tute issues are rejected until restoration. Existing historical records remain readable and retryable. Current-month report lists exclude removed pupils, while past lists and financial/attendance/tute totals retain history. CSV exports include removed pupils with records for the selected period and label their status **Removed**, retaining formula-prefix escaping.
+
+Removal and restoration are normal versioned student operations in the atomic IndexedDB/outbox path. They work offline, propagate as ordinary one-record incremental sync updates, and use the existing conflict review when another device changes the same student. The sync protocol, snapshot/cursor batch, tombstones, full-refresh recovery and local delta merge are unchanged.
+
+Run `scripts/check-removal.mjs` with the optional Playwright setup above to verify offline removal, reload persistence, removed QR rejection, incremental propagation, history retention and restoration between two isolated browser sessions on the local preview.
