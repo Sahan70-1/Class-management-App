@@ -46,6 +46,7 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  if(url.pathname!=='/api/sync'||request.method!=='POST')return json({error:'Not found.'},404);
  if(Number(request.headers.get('content-length'))>2500000)return json({error:'Request too large.'},413);
  const body:any=await request.json();if(!Array.isArray(body.operations)||body.operations.length>100)return json({error:'Invalid batch.'},400);
+ const lastSeq=body.lastSeq??0;if(!Number.isSafeInteger(lastSeq)||lastSeq<0)return json({error:'Invalid sync cursor.'},400);
  const existing=await env.DB.prepare('SELECT COUNT(*) AS count FROM records').first<{count:number}>();if(!existing?.count&&role==='admin'){await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO schedule_lock(id,revision) VALUES(1,0)'),...seedRecords().map(r=>env.DB.prepare('INSERT OR IGNORE INTO records(entity,record_key,value,revision) VALUES(?,?,?,?)').bind(r.entity,r.key,JSON.stringify(r.value),r.revision))]);}
  let all=await records(env.DB);const accepted:string[]=[],conflicts:{id:string;message:string}[]=[];
  for(const op of body.operations as Operation[]){
@@ -69,7 +70,20 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  if(!result[0].meta.changes){conflicts.push({id:op.id,message:'This record changed during sync. Review the newest version.'});continue;}
  accepted.push(op.id);all=[...all.filter(r=>recordId(r.entity,r.key)!==recordId(op.entity,op.key)),{entity:op.entity,key:op.key,value:op.value,revision:op.baseRevision+1}];
  }
- const history=(await env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200').all()).results;
- return json({accepted,conflicts,records:await records(env.DB),history,role,email});
+ // D1 batches are transactional: records and cursor must describe the same snapshot.
+ const snapshot=await env.DB.batch([
+ env.DB.prepare('SELECT COALESCE(MAX(seq),0) AS seq FROM events'),
+ env.DB.prepare(`WITH latest AS (SELECT entity,record_key,MAX(seq) AS seq FROM events GROUP BY entity,record_key)
+ SELECT r.entity,r.record_key AS key,r.value,r.revision FROM records r
+ LEFT JOIN latest e ON e.entity=r.entity AND e.record_key=r.record_key
+ WHERE ?=0 OR ?>COALESCE((SELECT MAX(seq) FROM events),0) OR e.seq>?`).bind(lastSeq,lastSeq,lastSeq),
+ // No delete API currently exists. Event-backed removals are returned as tombstones.
+ env.DB.prepare(`SELECT e.entity,e.record_key AS key FROM events e
+ LEFT JOIN records r ON r.entity=e.entity AND r.record_key=e.record_key
+ WHERE e.seq>? AND r.record_key IS NULL GROUP BY e.entity,e.record_key`).bind(lastSeq),
+ env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200')
+ ]);
+ const nextSeq=Number((snapshot[0].results[0] as {seq:number}).seq);
+ return json({accepted,conflicts,records:snapshot[1].results.map((r:any)=>({...r,value:JSON.parse(r.value)})),deleted:snapshot[2].results,full:lastSeq===0||lastSeq>nextSeq,lastSeq:nextSeq,history:snapshot[3].results,role,email});
  }catch(error){console.error('API error',error instanceof Error?error.message:'unknown');return json({error:'The server could not complete this request. Device changes remain queued.'},500);}
 }};

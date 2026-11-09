@@ -34,5 +34,34 @@ test('sync persists independent actions, retries safely, protects roles, and rej
  assert.equal(snapshot.conflicts.length,0);assert.equal(snapshot.records.find((r:any)=>r.entity==='schedules'&&r.key===schedule.key).revision,2);
  snapshot=(await request('/api/sync',{operations:[{...edit,id:crypto.randomUUID()}]})).body;
  assert.equal(snapshot.conflicts.length,1);assert.match(snapshot.conflicts[0].message,/newer/);
+
+ // Separate devices start from a complete snapshot, then consume only changed keys.
+ const initial=(await request('/api/sync',{operations:[],lastSeq:0})).body;
+ assert.equal(initial.full,true);assert.ok(initial.records.length>12);
+ const cursor=initial.lastSeq;
+ const idle=(await request('/api/sync',{operations:[],lastSeq:cursor})).body;
+ assert.deepEqual(idle.records,[]);assert.equal(idle.lastSeq,cursor);
+ const pupil=initial.records.find((r:any)=>r.entity==='students');
+ const change={...operation,id:crypto.randomUUID(),entity:'students',key:pupil.key,value:{...pupil.value,name:'Updated on device A'},baseRevision:pupil.revision};
+ const changed=(await request('/api/sync',{operations:[change],lastSeq:cursor})).body;
+ assert.deepEqual(changed.records.map((r:any)=>r.key),[pupil.key]);assert.ok(changed.lastSeq>cursor);
+ const replay=(await request('/api/sync',{operations:[change],lastSeq:changed.lastSeq})).body;
+ assert.deepEqual(replay.accepted,[change.id]);assert.deepEqual(replay.records,[]);assert.equal(replay.lastSeq,changed.lastSeq);
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM events WHERE operation_id=?').bind(change.id).first() as any).n,1);
+ const deviceB=(await request('/api/sync',{operations:[],lastSeq:cursor})).body;
+ assert.deepEqual(deviceB.records,changed.records);
+ // Concurrent changes to different records converge, including a replacement of an existing value.
+ const pupils=initial.records.filter((r:any)=>r.entity==='students').slice(1,3);
+ await Promise.all(pupils.map((r:any)=>request('/api/sync',{operations:[{...change,id:crypto.randomUUID(),key:r.key,value:{...r.value,name:'Concurrent '+r.key},baseRevision:r.revision}],lastSeq:changed.lastSeq})));
+ const a=(await request('/api/sync',{operations:[],lastSeq:changed.lastSeq})).body;
+ const b=(await request('/api/sync',{operations:[],lastSeq:deviceB.lastSeq})).body;
+ assert.deepEqual(a.records,b.records);assert.equal(a.lastSeq,b.lastSeq);assert.equal(a.records.length,2);
+ // Deletes are not exposed by the API, but an event-backed removal is a tombstone.
+ await db.batch([db.prepare("INSERT INTO events(operation_id,entity,record_key,at,actor,description,value) VALUES(?,?,?,?,?,?,?)").bind(crypto.randomUUID(),'students',pupil.key,new Date().toISOString(),'tutor@local.demo','Removed','null'),db.prepare('DELETE FROM records WHERE entity=? AND record_key=?').bind('students',pupil.key)]);
+ const removed=(await request('/api/sync',{operations:[],lastSeq:a.lastSeq})).body;
+ assert.deepEqual(removed.records,[]);assert.deepEqual(removed.deleted,[{entity:'students',key:pupil.key}]);
+ const reset=(await request('/api/sync',{operations:[],lastSeq:removed.lastSeq+100})).body;
+ assert.equal(reset.full,true);assert.equal(reset.records.some((r:any)=>r.key===pupil.key),false);
+ assert.equal((await request('/api/sync',{operations:[],lastSeq:-1})).status,400);
  }finally{await mf.dispose();}
 });
