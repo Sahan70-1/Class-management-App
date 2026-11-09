@@ -103,3 +103,11 @@ The deployment target is a Cloudflare Worker module (`dist/server/index.js`) wit
 - Photos are resized locally to 256px JPEGs and synchronized with the student record; there is no R2 upload dependency in this initial version.
 
 A ZIP of the exact committed source is served at `/classroom-source.zip` behind the private Site access boundary. It excludes dependencies, Git metadata, local databases, credentials, and build output. Build from a committed checkout to keep this source download aligned with the release.
+
+## Incremental sync
+
+The client sends its last successfully merged `lastSeq` (zero for a first sync). The API returns current values only for keys changed after that event sequence, plus `lastSeq`, `full`, and event-backed deletion tombstones in `deleted`. Snapshot reads run in one D1 batch so records and cursor agree during concurrent writes. Existing event indexes are sufficient; no migration is required. Seed records are included in full snapshots even though they have no events.
+
+The browser merges deltas and reapplies pending outbox operations in order. Cursor, cache, and outbox acknowledgements commit in one IndexedDB transaction. Empty, malformed, or count-mismatched caches and invalid/ahead cursors recover with a full snapshot. Discarding a conflict requests a full snapshot to restore the authoritative server value. No delete API is added: a future deletion must atomically append an event and remove the record. Direct database edits without events require a full refresh.
+
+Optional two-browser integration check: install `playwright-core` separately, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs`, run the local production preview on port 8787, then run `node scripts/check-two-browsers.mjs`. It uses two isolated Chromium contexts, edits lesson titles through the UI in both directions, verifies a one-record delta and empty idle delta, and compares local caches. `CHROMIUM_PATH` can select an installed Chromium binary. Screenshots go to the ignored `work/` directory. This check uses only fictional local data.
