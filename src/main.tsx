@@ -1,3 +1,4 @@
+import {BottomNavigation} from './components/BottomNavigation';
 import {SyncDialog} from './components/SyncDialog';
 import {ReportsTab} from './components/ReportsTab';
 import {StudentsTab} from './components/StudentsTab';
@@ -572,18 +573,7 @@ function App() {
           </footer>
         </main>
       </div>
-      <nav className="bottom-nav">
-        {nav.map(({ name, icon }) => (
-          <button
-            className={tab === name ? "active" : ""}
-            key={name}
-            onClick={() => navigate(name)}
-          >
-            <Icon icon={icon} size={21} />
-            <span>{name}</span>
-          </button>
-        ))}
-      </nav>
+      <BottomNavigation tab={tab} navigate={navigate}/>
       {toast && (
         <div role="status" className="toast">
           <CheckCircle2 size={19} />
