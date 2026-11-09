@@ -1,3 +1,4 @@
+import {ManageClassesDialog} from './components/ManageClassesDialog';
 import {ActivityDialog} from './components/ActivityDialog';
 import {BottomNavigation} from './components/BottomNavigation';
 import {SyncDialog} from './components/SyncDialog';
@@ -599,104 +600,7 @@ function App() {
           notify={setToast}
         />
       )}
-      {modal === "manage" && (
-        <Modal
-          title="Manage classes"
-          subtitle="Weekly timetables, extra classes and change history"
-          onClose={() => setModal(null)}
-          wide
-        >
-          <div className="modal-action-row">
-            {role === "admin" && (
-              <>
-                <button
-                  className="button primary"
-                  onClick={() => {
-                    setEditing(null);
-                    setModal("weekly");
-                  }}
-                >
-                  <Plus size={17} />
-                  Weekly class
-                </button>
-                <button
-                  className="button white"
-                  onClick={() => {
-                    setEditing(null);
-                    setModal("extra");
-                  }}
-                >
-                  <Plus size={17} />
-                  Extra class
-                </button>
-              </>
-            )}
-            <button
-              className="button white"
-              onClick={() => setModal("history")}
-            >
-              <HistoryIcon size={17} />
-              Change history
-            </button>
-          </div>
-          <div className="manage-list">
-            {schedules.map((s) => {
-              const v =
-                [...s.versions]
-                  .reverse()
-                  .find(
-                    (v) => v.from <= date && (!v.until || date <= v.until),
-                  ) || s.versions.at(-1)!;
-              return (
-                <div className="manage-row" key={s.id}>
-                  <span className="class-icon teal">
-                    <GraduationCap size={23} />
-                  </span>
-                  <div>
-                    <h3>{classes.find((c) => c.id === s.classId)?.name}</h3>
-                    <p>
-                      {s.extraDate
-                        ? shortDate(s.extraDate)
-                        : "Every " +
-                          [
-                            "Sunday",
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                          ][v.weekday]}{" "}
-                      · {timeText(v.start)} – {timeText(v.end)}
-                    </p>
-                    <small>
-                      {v.cancelled
-                        ? "Cancelled from " + v.from
-                        : s.extraDate
-                          ? "Extra class"
-                          : "Weekly timetable"}
-                    </small>
-                  </div>
-                  {role === "admin" && (
-                    <button
-                      className="button white"
-                      onClick={() => {
-                        let d = s.extraDate || date;
-                        while (!sessionsFor(d, [s], []).length)
-                          d = addDays(d, 1);
-                        scheduleEditor(sessionsFor(d, [s], overrides)[0]);
-                      }}
-                    >
-                      Edit
-                      <ChevronRight size={15} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </Modal>
-      )}
+      {modal === "manage" && <ManageClassesDialog setModal={setModal} role={role} setEditing={setEditing} schedules={schedules} date={date} classes={classes} scheduleEditor={scheduleEditor} overrides={overrides}/>}
       {["schedule", "weekly", "extra"].includes(modal || "") && (
         <ScheduleModal
           mode={modal!}
