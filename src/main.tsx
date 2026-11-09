@@ -1,3 +1,4 @@
+import {Stat} from './components/Stat';
 import {Modal} from './components/Modal';
 import {Badge} from './components/Badge';
 import {Avatar} from './components/Avatar';
@@ -2196,32 +2197,7 @@ function App() {
   }
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-  foot,
-  tone,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: ReactNode;
-  foot: string;
-  tone: string;
-}) {
-  return (
-    <div className="stat-card">
-      <div className="stat-top">
-        <span>{label}</span>
-        <span className={"stat-icon " + tone}>
-          <Icon icon={icon} size={19} />
-        </span>
-      </div>
-      <strong className="stat-value">{value}</strong>
-      <span className="stat-foot">{foot}</span>
-    </div>
-  );
-}
+
 function MiniCalendar({
   date,
   onDate,
