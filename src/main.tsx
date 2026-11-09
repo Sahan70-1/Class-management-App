@@ -1,3 +1,4 @@
+import {Icon} from './components/Icon';
 import {nav} from './navigation';
 import {type Tab} from './navigation';
 import React, {
@@ -96,17 +97,7 @@ import "./styles.css";
 
 
 
-function Icon({
-  icon: I,
-  size = 20,
-  ...props
-}: {
-  icon: LucideIcon;
-  size?: number;
-  className?: string;
-}) {
-  return <I size={size} strokeWidth={1.8} {...props} />;
-}
+
 function Avatar({
   student,
   size = "normal",
