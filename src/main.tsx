@@ -1,3 +1,4 @@
+import {ActivityDialog} from './components/ActivityDialog';
 import {BottomNavigation} from './components/BottomNavigation';
 import {SyncDialog} from './components/SyncDialog';
 import {ReportsTab} from './components/ReportsTab';
@@ -587,47 +588,7 @@ function App() {
         </div>
       )}
       {modal === "sync" && <SyncDialog setModal={setModal} data={data}/>}
-      {modal === "activity" && (
-        <Modal
-          title="Recent activity"
-          subtitle="Changes saved locally and on the server"
-          onClose={() => setModal(null)}
-        >
-          <div className="activity-list modal-list">
-            {[
-              ...data.pending.map((o) => ({
-                id: o.id,
-                description: o.entity + " updated · pending sync",
-                actor: o.actor,
-                at: o.at,
-              })),
-              ...data.history,
-            ]
-              .sort((a, b) => b.at.localeCompare(a.at))
-              .map((h) => (
-                <div className="history-row" key={h.id}>
-                  <span className="activity-icon mint">
-                    <HistoryIcon size={17} />
-                  </span>
-                  <div>
-                    <strong>{h.description}</strong>
-                    <p>{h.actor}</p>
-                    <small>
-                      {new Date(h.at).toLocaleString("en-GB", {
-                        timeZone: "Asia/Colombo",
-                      })}
-                    </small>
-                  </div>
-                </div>
-              ))}
-            {!recent.length && (
-              <p className="muted padded">
-                No new changes yet. Your activity will appear here.
-              </p>
-            )}
-          </div>
-        </Modal>
-      )}
+      {modal === "activity" && <ActivityDialog setModal={setModal} data={data} recent={recent}/>}
       {modal === "settings" && (
         <SettingsModal
           actualRole={data.role}
