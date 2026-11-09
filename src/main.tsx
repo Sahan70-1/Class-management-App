@@ -1,3 +1,4 @@
+import {Badge} from './components/Badge';
 import {Avatar} from './components/Avatar';
 import {Icon} from './components/Icon';
 import {nav} from './navigation';
@@ -100,22 +101,7 @@ import "./styles.css";
 
 
 
-function Badge({
-  children,
-  tone = "neutral",
-  dot = false,
-}: {
-  children: ReactNode;
-  tone?: string;
-  dot?: boolean;
-}) {
-  return (
-    <span className={"badge " + tone}>
-      {dot && <i />}
-      {children}
-    </span>
-  );
-}
+
 function Modal({
   title,
   subtitle,
