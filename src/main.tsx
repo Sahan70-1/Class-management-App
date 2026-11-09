@@ -1,3 +1,4 @@
+import {Modal} from './components/Modal';
 import {Badge} from './components/Badge';
 import {Avatar} from './components/Avatar';
 import {Icon} from './components/Icon';
@@ -102,54 +103,7 @@ import "./styles.css";
 
 
 
-function Modal({
-  title,
-  subtitle,
-  children,
-  onClose,
-  wide = false,
-}: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  onClose: () => void;
-  wide?: boolean;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    ref.current?.showModal();
-    const old = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = old;
-    };
-  }, []);
-  return (
-    <dialog
-      className={"modal " + (wide ? "wide" : "")}
-      ref={ref}
-      onCancel={onClose}
-      onClick={(e) => {
-        if (e.target === ref.current) onClose();
-      }}
-    >
-      <div className="modal-heading">
-        <div>
-          <h2>{title}</h2>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-        <button
-          className="icon-button"
-          onClick={onClose}
-          aria-label="Close dialog"
-        >
-          <X size={20} />
-        </button>
-      </div>
-      {children}
-    </dialog>
-  );
-}
+
 function App() {
   const data = useSyncExternalStore(subscribe, getSnapshot);
   const today = todayISO();
