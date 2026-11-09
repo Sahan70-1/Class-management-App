@@ -132,7 +132,7 @@ export function SettingsModal({
                   onChange={(e) => setMemberRole(e.target.value as Role)}
                 >
                   <option value="staff">
-                    Attendance staff · check-in, fees & tutes
+                    Attendance staff · students, classes, timetable & check-in
                   </option>
                   <option value="viewer">
                     Read only · view & export reports

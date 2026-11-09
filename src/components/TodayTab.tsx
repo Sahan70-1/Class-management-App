@@ -268,7 +268,9 @@ export function TodayTab({
               if (!c) return null;
               const count = students.filter((s) => s.classId === c.id).length;
               const marked = attendance.filter(
-                (a) => a.sessionId === session.id,
+                (a) =>
+                  a.sessionId === session.id &&
+                  students.some((s) => s.id === a.studentId),
               ).length;
               return (
                 <article
@@ -312,7 +314,7 @@ export function TodayTab({
                         {session.extra ? "One-time class" : "Weekly class"}
                       </p>
                     </div>
-                    {role === "admin" && (
+                    {role !== "viewer" && (
                       <button
                         className="icon-button class-options"
                         aria-label={"Manage " + c.name}
@@ -352,7 +354,6 @@ export function TodayTab({
                     <button
                       className={"button " + (i === 0 ? "primary" : "subtle")}
                       onClick={() => openClass(session)}
-                      disabled={session.cancelled}
                     >
                       Open class
                       <ArrowRight size={16} />
@@ -369,7 +370,7 @@ export function TodayTab({
                   A fresh space for learning. Add an extra class or choose
                   another day.
                 </p>
-                {role === "admin" && (
+                {role !== "viewer" && (
                   <button
                     className="button primary"
                     onClick={() => {
@@ -495,7 +496,11 @@ export function TodayTab({
                 (t) => t.classId === c.id && t.month === month,
               );
               const total = students.filter((s) => s.classId === c.id).length;
-              const count = issues.filter((i) => i.tuteId === t?.id).length;
+              const count = issues.filter(
+                (i) =>
+                  i.tuteId === t?.id &&
+                  students.some((s) => s.id === i.studentId),
+              ).length;
               return (
                 <div className="tute-mini" key={c.id}>
                   <div>

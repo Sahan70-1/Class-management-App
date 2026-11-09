@@ -1,5 +1,6 @@
 import { ScanLine, UserRound } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+import { useStudentRemoval } from "../useStudentRemoval";
 import {
   money,
   monthText,
@@ -30,6 +31,40 @@ export function StudentProfileDialog({
   issues: Issue[];
   role: Role;
 }) {
+  const [confirming, setConfirming] = useState(false);
+  const removal = useStudentRemoval(role);
+  if (confirming && role === "admin")
+    return (
+      <Modal
+        title={"Remove " + student.name + "?"}
+        subtitle="Attendance, fees and tute-issue history will be kept."
+        onClose={() => setConfirming(false)}
+      >
+        <p>
+          {student.name} will be hidden from active lists and cannot check in,
+          pay fees or receive tutes until restored.
+        </p>
+        {removal.error && (
+          <p role="alert" className="callout warning">
+            {removal.error}
+          </p>
+        )}
+        <div className="modal-action-row">
+          <button className="button white" onClick={() => setConfirming(false)}>
+            Keep student
+          </button>
+          <button
+            className="button primary"
+            disabled={removal.busy}
+            onClick={async () => {
+              if (await removal.change(student, true)) setModal(null);
+            }}
+          >
+            Confirm removal
+          </button>
+        </div>
+      </Modal>
+    );
   return (
     <Modal
       title="Student profile"
@@ -95,6 +130,12 @@ export function StudentProfileDialog({
           </button>
         )}
       </div>
+      {student.removedAt && <Badge tone="amber">Removed</Badge>}
+      {role === "admin" && !student.removedAt && (
+        <button className="button white" onClick={() => setConfirming(true)}>
+          Remove student
+        </button>
+      )}
       <h3 className="spaced-title">Recent payments</h3>
       {fees
         .filter((f) => f.studentId === student.id)

@@ -91,11 +91,11 @@ export function TuteModal({
             maxLength={150}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={role !== "admin"}
+            disabled={role === "viewer"}
             placeholder="e.g. Perimeter & area"
           />
         </label>
-        {role === "admin" && (
+        {role !== "viewer" && (
           <button className="button primary" disabled={busy || !title.trim()}>
             <Check size={17} />
             {busy ? "Saving…" : "Save lesson title"}

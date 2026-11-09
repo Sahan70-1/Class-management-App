@@ -15,7 +15,21 @@ test('offline action is durable, independent, retained on failure, and acknowled
  (navigator as any).onLine=true;globalThis.fetch=async()=>{throw Error('Network interrupted');};await store.sync();assert.equal(await db.count('outbox'),1);assert.equal(store.getSnapshot().lastSync,null);
  globalThis.fetch=async(_input,init)=>{const {operations}=JSON.parse(init!.body as string) as {operations:Operation[]};return Response.json({accepted:operations.map(o=>o.id),conflicts:[],records:[...seedRecords(),...operations],lastSeq:1,full:true,history:[],role:'staff',email:'staff@example.com'});};
  await store.sync();assert.equal(await db.count('outbox'),0);assert.equal(store.getSnapshot().pending.length,0);assert.ok(store.getSnapshot().lastSync);assert.equal(store.getSnapshot().role,'staff');
- await assert.rejects(()=>store.mutate('tutes',{id:'grade-9@'+day.slice(0,7),classId:'grade-9',month:day.slice(0,7),title:'Changed title'},'staff'),/role/);
+ await assert.rejects(()=>store.mutate('tutes',{id:'grade-9@'+day.slice(0,7),classId:'grade-9',month:day.slice(0,7),title:'Changed title'},'viewer'),/role/);
+
+ (navigator as any).onLine=false;
+ await store.mutate('classes',{id:'staff-class',grade:'8',name:'Afternoon maths',fee:1200,subject:'Maths',room:'Main',color:'teal'},'staff');
+ const seededStudent=seedRecords().find(r=>r.entity==='students')!.value as any;
+ await store.mutate('students',{...seededStudent,id:'S-STAFF',classId:'staff-class'},'staff');
+ await store.mutate('schedules',{id:'staff-schedule',classId:'staff-class',versions:[{from:day,weekday:1,start:'08:00',end:'10:00'}]},'staff');
+ await store.mutate('overrides',{id:'staff-schedule@'+day,scheduleId:'staff-schedule',date:day,start:'09:00',end:'11:00',cancelled:false},'staff');
+ await store.mutate('tutes',{id:'staff-class@'+day.slice(0,7),classId:'staff-class',month:day.slice(0,7),title:'New lesson'},'staff');
+ assert.equal(await db.count('outbox'),5);
+ assert.equal((await db.get('records','classes:staff-class')).value.grade,'8');
+ const pending=await db.getAll('outbox');assert.equal(pending.every(o=>o.actor==='staff@example.com'),true);
+ await assert.rejects(()=>store.mutate('classes',{id:'bad-class',grade:'8',name:'Bad fee',fee:-1,subject:'Maths',room:'Main',color:'teal'},'staff'),/fee/);
+ await assert.rejects(()=>store.mutate('students',{...seededStudent,id:'S-STAFF',classId:'staff-class'},'staff'),/role/);
+ (navigator as any).onLine=true;await store.sync();assert.equal(await db.count('outbox'),0);
 
  assert.equal(await db.get('meta','lastSeq'),1);
  const original=await db.getAll('records');const target=original.find(r=>r.entity==='students');
@@ -38,5 +52,19 @@ test('offline action is durable, independent, retained on failure, and acknowled
  (navigator as any).onLine=true;
  respond([],5,{conflicts:[{id:queued.id,message:'Newer record'}]});await store.sync();assert.equal((await db.get('records','students:S-00001')).value.name,'Optimistic');assert.equal(await db.count('outbox'),1);
  respond(seedRecords(),5,{full:true});await store.discardConflict(queued.id);assert.equal(sent.lastSeq,0);assert.equal(await db.count('outbox'),0);assert.equal((await db.get('records','students:S-00001')).value.name,latest.value.name);
+
+ // Offline removal stays durable and returns through the ordinary incremental merge.
+ respond([],5,{role:'admin',email:'tutor@local.demo'});await store.sync();
+ (navigator as any).onLine=false;
+ const pupil=await db.get('records','students:S-00002');
+ const removed={...pupil.value,removedAt:new Date().toISOString(),removedBy:'tutor@local.demo'};
+ for(const role of ['staff','viewer'] as const)await assert.rejects(()=>store.mutate('students',removed,role),/role/);
+ const history=(await db.getAll('records')).filter(r=>['attendance','fees','issues'].includes(r.entity));
+ await store.mutate('students',removed,'admin');assert.equal(await db.count('outbox'),1);assert.equal((await db.get('records','students:S-00002')).value.removedAt,removed.removedAt);
+ await store.initialize();assert.ok((store.getSnapshot().records.find(r=>r.key==='S-00002')!.value as any).removedAt);
+ await assert.rejects(()=>store.mutate('attendance',{...attendance,id:'new',studentId:'S-00002'},'admin'),/removed/);
+ const removal=(await db.getAll('outbox'))[0];respond([{entity:'students',key:removed.id,value:removed,revision:pupil.revision+1}],6,{accepted:[removal.id],role:'admin',email:'tutor@local.demo'});
+ (navigator as any).onLine=true;await store.sync();assert.equal(sent.lastSeq,5);assert.equal(sent.operations.length,1);assert.equal(await db.count('outbox'),0);assert.equal(await db.get('meta','lastSeq'),6);
+ assert.deepEqual((await db.getAll('records')).filter(r=>['attendance','fees','issues'].includes(r.entity)),history);
  db.close();globalThis.setInterval=interval;
 });

@@ -1,3 +1,4 @@
+import { classGrade } from "../model";
 import { ArrowRight, Camera, Info } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import { type EntityMap, type Student } from "../model";
@@ -59,7 +60,7 @@ export function RegisterModal({
     if (!name.trim()) return;
     setSaving(true);
     const c = classes.find((c) => c.id === classId)!;
-    const grade = c.name.replace("Grade ", "");
+    const grade = classGrade(c);
     const id =
       existing?.id || "S-" + crypto.randomUUID().slice(0, 8).toUpperCase();
     const sameClass = existing?.classId === classId;
@@ -68,6 +69,7 @@ export function RegisterModal({
       : grade.padStart(2, "0") + "-" + id.slice(-6);
     try {
       await onSave({
+        ...existing,
         id,
         name: name.trim(),
         phone,
@@ -133,7 +135,7 @@ export function RegisterModal({
             >
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} · {c.subject}
+                  Grade {classGrade(c)} · {c.name}
                 </option>
               ))}
             </select>

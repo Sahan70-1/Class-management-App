@@ -86,8 +86,8 @@ The tutor adds member email/role in **Workspace settings**, then separately gran
 
 | Role | Permissions |
 | --- | --- |
-| Tutor / admin | Students, schedules, tute titles, members, check-in, payments, issuance, reports |
-| Attendance staff | View directory/reports and record attendance, fees and tute issues |
+| Tutor / admin | Register/edit students; remove/restore students; manage classes, schedules, tute titles and members; check-in, payments, issuance and reports |
+| Attendance staff | Register new students; add/edit classes, timetables and tute titles; record attendance, fees and tute issues; view reports. Cannot edit existing students or remove/restore them. |
 | Read-only viewer | Read records, view and export reports; no mutations |
 
 The admin role preview only reduces UI permissions; it cannot grant a staff/viewer account additional server permissions. Hosted requests require the Sites-authenticated email header and an existing membership. API responses are not cached. No external messages or payment processing are performed.
@@ -99,7 +99,7 @@ The deployment target is a Cloudflare Worker module (`dist/server/index.js`) wit
 - Local production browser checks pass at mobile and desktop widths, including the four tabs, class/free-time dialogs, registration, profile, QR, and sync dialog. Two isolated Chromium sessions also verify changes propagate both ways.
 - Offline use requires one successful load in a secure browser and adequate browser storage.
 - The default seed is clearly labeled fictional data. Replace the sample dataset before entering live student records.
-- The supplied grade groups, rooms and fee amounts are initial configuration in `src/seed.ts`; broader class/fee setup, data import, account recovery, installments, SMS and WhatsApp messaging are future extensions.
+- The supplied grade groups, rooms and fee amounts are initial configuration in `src/seed.ts`; data import, account recovery, installments, SMS and WhatsApp messaging are future extensions.
 - Photos are resized locally to 256px JPEGs and synchronized with the student record; there is no R2 upload dependency in this initial version.
 
 A ZIP of the exact committed source is served at `/classroom-source.zip` behind the private Site access boundary. It excludes dependencies, Git metadata, local databases, credentials, and build output. Build from a committed checkout to keep this source download aligned with the release.
@@ -119,3 +119,22 @@ Optional two-browser integration check: install `playwright-core` separately, se
 The formatting pass and individual extractions are separate commits. State and mutation/report handlers stay together in `App.tsx` to preserve their shared closures and ordering. No view was skipped. After the split, production JavaScript is 479.60 kB (155.79 kB gzip), versus 476.89 kB (152.25 kB gzip) before; CSS remains exactly 52.71 kB (11.60 kB gzip).
 
 With the same optional Playwright setup as the sync check, `node scripts/check-ui.mjs` runs the mobile/desktop UI smoke checks against the local production preview. It checks page errors and horizontal overflow and saves screenshots under `work/`.
+
+## Staff setup and session overview
+
+
+Admin and attendance staff can add or edit a class from **Today → Manage classes → Add class / Edit class**, including classes without a timetable yet. Grade is 1–13, class name is required (up to 100 characters), and monthly fees are positive LKR values up to 1,000,000 with at most two decimal places. These checks run in the form, IndexedDB write path, and sync API. Old class records derive their grade from names such as “Grade 9”; saving the form persists an explicit grade. Existing student grade values are not bulk-updated when a class is edited, and previously recorded payments keep their amounts.
+
+Staff may register new students but editing an existing student and managing workspace members remain admin-only. Staff can also edit day/weekly timetables, create extra sessions, cancel sessions, and edit monthly tute titles. Changes use the existing durable outbox, revision checks and schedule overlap protection. Registration retries are idempotent for the original authenticated author.
+
+**Open class** opens a session overview with class details, date/time, fee, attendance list and present/not-marked/total counts. Counts are specific to that session, include current enrollees and students already marked before a class transfer, and include pending local changes. **Start scanning** explicitly switches to Scan with that session selected. Opening the overview does not record attendance, payment or tute issuance; cancelled sessions and read-only viewers cannot start scanning from it.
+
+## Removing a student
+
+Only admins can remove a student from their profile after confirming the student's name. Removal stores `removedAt` and the signed-in admin's `removedBy` on the student; no student or attendance, fee, or tute-issue record is deleted. Admins can enable **Show removed students** in Students and choose **Restore**. Editing other details preserves removal status. Staff and viewers cannot remove, restore, or register a student with removal metadata. Server membership, rather than the UI role preview, controls permission.
+
+Removed students disappear from active directories, check-in search, rosters, session overviews and active counts. Scanning their QR shows “This student has been removed”; new attendance, payments and tute issues are rejected until restoration. Existing historical records remain readable and retryable. Current-month report lists exclude removed pupils, while past lists and financial/attendance/tute totals retain history. CSV exports include removed pupils with records for the selected period and label their status **Removed**, retaining formula-prefix escaping.
+
+Removal and restoration are normal versioned student operations in the atomic IndexedDB/outbox path. They work offline, propagate as ordinary one-record incremental sync updates, and use the existing conflict review when another device changes the same student. The sync protocol, snapshot/cursor batch, tombstones, full-refresh recovery and local delta merge are unchanged.
+
+Run `scripts/check-removal.mjs` with the optional Playwright setup above to verify offline removal, reload persistence, removed QR rejection, incremental propagation, history retention and restoration between two isolated browser sessions on the local preview.

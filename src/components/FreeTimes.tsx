@@ -126,7 +126,7 @@ export function FreeTimes({
             </p>
           )}
         </div>
-        {role === "admin" && (
+        {role !== "viewer" && (
           <button
             className="button primary full"
             disabled={!choice || busy}

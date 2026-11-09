@@ -1,3 +1,4 @@
+import { reportRoster } from "../reports";
 import {
   BookOpen,
   CalendarDays,
@@ -88,7 +89,18 @@ export function ReportsTab({
         </Badge>
       </div>
       {(() => {
-        const roster = students.filter((s) => s.classId === reportClass);
+        const roster = reportRoster(
+          students,
+          reportClass,
+          reportMonth,
+          attendance,
+          fees,
+          issues,
+          tutes,
+        );
+        const activeRoster = students.filter(
+          (s) => !s.removedAt && s.classId === reportClass,
+        );
         const monthFees = fees.filter(
           (f) => f.classId === reportClass && f.month === reportMonth,
         );
@@ -137,8 +149,8 @@ export function ReportsTab({
               />
               <Stat
                 icon={Users}
-                label="Enrolled students"
-                value={roster.length}
+                label="Active students"
+                value={activeRoster.length}
                 foot={classes.find((c) => c.id === reportClass)?.name || ""}
                 tone="blue"
               />
@@ -154,7 +166,7 @@ export function ReportsTab({
                 </div>
                 <Badge tone="amber">
                   {
-                    roster.filter(
+                    activeRoster.filter(
                       (s) => !monthFees.some((f) => f.studentId === s.id),
                     ).length
                   }{" "}
@@ -219,7 +231,10 @@ export function ReportsTab({
                           <td>
                             <div className="student-cell">
                               <Avatar student={s} size="small" />
-                              <strong>{s.name}</strong>
+                              <strong>
+                                {s.name}
+                                {s.removedAt ? " (removed)" : ""}
+                              </strong>
                             </div>
                           </td>
                           <td>{s.id}</td>
@@ -259,7 +274,8 @@ export function ReportsTab({
               </div>
               <div className="directory-footer">
                 <Info size={15} />
-                Last synced:{" "}
+                Totals include retained history for removed students. Last
+                synced:{" "}
                 {data.lastSync
                   ? new Date(data.lastSync).toLocaleString("en-GB", {
                       timeZone: "Asia/Colombo",

@@ -85,7 +85,7 @@ export function PageHeading({
             })}
             <ChevronRight size={15} />
           </button>
-        ) : tab === "Students" && role === "admin" ? (
+        ) : tab === "Students" && role !== "viewer" ? (
           <button
             className="button primary"
             onClick={() => {

@@ -116,7 +116,11 @@ export function ScanTab({
             }}
           />
         </div>
-        {student ? (
+        {student?.removedAt ? (
+          <div role="alert" className="callout warning">
+            This student has been removed.
+          </div>
+        ) : student ? (
           <StudentCheckin
             student={student}
             status={studentStatus(student)}

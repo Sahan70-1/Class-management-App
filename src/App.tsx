@@ -1,3 +1,8 @@
+import { activeStudentsOnly } from "./model";
+import { reportCsv } from "./reports";
+import { SessionOverview } from "./components/SessionOverview";
+import { Modal } from "./components/Modal";
+import { shortDate } from "./model";
 import { CheckCircle2, GraduationCap, WifiOff, X } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityDialog } from "./components/ActivityDialog";
@@ -64,6 +69,13 @@ export function App() {
     fees = values(data.records, "fees"),
     tutes = values(data.records, "tutes"),
     issues = values(data.records, "issues");
+  const enrolled = activeStudentsOnly(students);
+  useEffect(() => {
+    if (student) {
+      const latest = students.find((s) => s.id === student.id);
+      if (latest) setStudent(latest);
+    }
+  }, [data.records, student?.id]);
   const role: Role =
     data.role === "viewer"
       ? "viewer"
@@ -78,14 +90,16 @@ export function App() {
       sessions.find((s) => !s.cancelled) ||
       null;
   const currentClass = classes.find((c) => c.id === activeSession?.classId);
-  const activeStudents = students.filter(
+  const activeStudents = enrolled.filter(
     (s) => s.classId === activeSession?.classId,
   );
   const month = monthOf(date);
   const currentTute = tutes.find(
     (t) => t.classId === activeSession?.classId && t.month === month,
   );
-  const present = attendance.filter((a) => a.date === date).length,
+  const present = attendance.filter(
+      (a) => a.date === date && enrolled.some((s) => s.id === a.studentId),
+    ).length,
     collected = fees
       .filter((f) => f.at.slice(0, 10) === date)
       .reduce((n, f) => n + f.amount, 0);
@@ -123,7 +137,7 @@ export function App() {
   }
   function openClass(session: Session) {
     setSelected(session.id);
-    setTab("Scan");
+    setModal("overview");
     setStudent(null);
     setQuery("");
   }
@@ -148,6 +162,11 @@ export function App() {
       setToast("Student QR not found. Search by name or ID.");
       return;
     }
+    if (s.removedAt) {
+      setStudent(null);
+      setToast("This student has been removed.");
+      return;
+    }
     if (!activeSession) {
       setToast("Select an active class before checking in.");
       return;
@@ -160,7 +179,13 @@ export function App() {
     setQuery("");
   }
   async function markAttendance() {
-    if (!student || !activeSession || activeSession.cancelled) return;
+    if (
+      !student ||
+      students.find((s) => s.id === student.id)?.removedAt ||
+      !activeSession ||
+      activeSession.cancelled
+    )
+      return;
     await save(
       "attendance",
       {
@@ -175,7 +200,12 @@ export function App() {
     );
   }
   async function issueTute() {
-    if (!student || !currentTute) return;
+    if (
+      !student ||
+      students.find((s) => s.id === student.id)?.removedAt ||
+      !currentTute
+    )
+      return;
     await save(
       "issues",
       {
@@ -237,7 +267,7 @@ export function App() {
         mobileMenu={mobileMenu}
         navigate={navigate}
         tab={tab}
-        students={students}
+        students={enrolled}
         setModal={setModal}
         role={role}
       />
@@ -289,7 +319,7 @@ export function App() {
               month={month}
               present={present}
               collected={collected}
-              students={students}
+              students={enrolled}
               calendar={calendar}
               setCalendar={setCalendar}
               setDate={setDate}
@@ -315,7 +345,7 @@ export function App() {
               classes={classes}
               date={date}
               setDate={setDate}
-              student={student}
+              student={students.find((s) => s.id === student?.id) || null}
               studentStatus={studentStatus}
               currentClass={currentClass}
               currentTute={currentTute}
@@ -330,13 +360,14 @@ export function App() {
               setToast={setToast}
               query={query}
               setQuery={setQuery}
-              students={students}
+              students={enrolled}
               activeStudents={activeStudents}
             />
           )}
 
           {tab === "Students" && (
             <StudentsTab
+              role={role}
               query={query}
               setQuery={setQuery}
               filter={filter}
@@ -407,8 +438,31 @@ export function App() {
           notify={setToast}
         />
       )}
+      {modal === "overview" && activeSession && currentClass && (
+        <Modal
+          title="Session overview"
+          subtitle={shortDate(activeSession.date)}
+          onClose={() => setModal(null)}
+          wide
+        >
+          <SessionOverview
+            session={activeSession}
+            group={currentClass}
+            students={students}
+            attendance={attendance}
+            role={role}
+            onStart={() => {
+              setModal(null);
+              setTab("Scan");
+              setStudent(null);
+              setQuery("");
+            }}
+          />
+        </Modal>
+      )}
       {modal === "manage" && (
         <ManageClassesDialog
+          notify={setToast}
           setModal={setModal}
           role={role}
           setEditing={setEditing}
@@ -499,7 +553,7 @@ export function App() {
           role={role}
         />
       )}
-      {modal === "payment" && student && currentClass && (
+      {modal === "payment" && student && !student.removedAt && currentClass && (
         <PaymentModal
           student={student}
           amount={currentClass.fee}
@@ -529,7 +583,7 @@ export function App() {
           month={month}
           tutes={tutes}
           issues={issues}
-          students={students}
+          students={enrolled}
           role={role}
           onClose={() => setModal(null)}
           onSave={async (value) => {
@@ -540,58 +594,16 @@ export function App() {
     </div>
   );
   function exportReport() {
-    const roster = students.filter((s) => s.classId === reportClass);
-    const rows = [
-      [
-        "Student ID",
-        "Name",
-        "Class",
-        "Month",
-        "Attendance count",
-        "Fee paid (LKR)",
-        "Tute issued",
-      ],
-      ...roster.map((s) => [
-        s.id,
-        s.name,
-        classes.find((c) => c.id === s.classId)?.name || "",
-        reportMonth,
-        attendance.filter(
-          (a) => a.studentId === s.id && a.date.startsWith(reportMonth),
-        ).length,
-        fees
-          .filter(
-            (f) =>
-              f.studentId === s.id &&
-              f.month === reportMonth &&
-              f.classId === s.classId,
-          )
-          .reduce((n, f) => n + f.amount, 0),
-        issues.some(
-          (i) =>
-            i.studentId === s.id &&
-            tutes.some((t) => t.id === i.tuteId && t.month === reportMonth),
-        )
-          ? "Yes"
-          : "No",
-      ]),
-    ];
-    const csv =
-      "\uFEFF" +
-      rows
-        .map((r) =>
-          r
-            .map(
-              (v) =>
-                '"' +
-                String(v)
-                  .replace(/^[=+@-]/, "'$&")
-                  .replace(/"/g, '""') +
-                '"',
-            )
-            .join(","),
-        )
-        .join("\r\n");
+    const csv = reportCsv(
+      students,
+      classes,
+      reportClass,
+      reportMonth,
+      attendance,
+      fees,
+      issues,
+      tutes,
+    );
     download(
       new Blob([csv], { type: "text/csv;charset=utf-8" }),
       "classroom-" + reportClass + "-" + reportMonth + ".csv",
