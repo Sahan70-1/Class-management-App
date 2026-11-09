@@ -1,3 +1,4 @@
+import {type Tab} from './navigation';
 import React, {
   useEffect,
   useState,
@@ -92,7 +93,7 @@ import {
 } from "./model";
 import "./styles.css";
 
-type Tab = "Today" | "Scan" | "Students" | "Reports";
+
 const nav: { name: Tab; icon: LucideIcon; description: string }[] = [
   { name: "Today", icon: LayoutDashboard, description: "Your teaching day" },
   { name: "Scan", icon: ScanLine, description: "Check in a student" },
