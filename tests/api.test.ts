@@ -34,5 +34,29 @@ test('sync persists independent actions, retries safely, protects roles, and rej
  assert.equal(snapshot.conflicts.length,0);assert.equal(snapshot.records.find((r:any)=>r.entity==='schedules'&&r.key===schedule.key).revision,2);
  snapshot=(await request('/api/sync',{operations:[{...edit,id:crypto.randomUUID()}]})).body;
  assert.equal(snapshot.conflicts.length,1);assert.match(snapshot.conflicts[0].message,/newer/);
+
+ assert.equal((await request('/api/members',{email:'staff@example.com',role:'staff'})).status,200);
+ const staff='staff@example.com';
+ assert.equal((await request('/api/members',{email:'intruder@example.com',role:'admin'},staff)).status,403);
+ const op=(entity:string,value:any,baseRevision=0)=>({...operation,id:crypto.randomUUID(),entity,key:value.id,value,baseRevision});
+ const group={id:'new-class',grade:'8',name:'Evening mathematics',fee:1500.50,subject:'Mathematics',room:'Main classroom',color:'teal'};
+ const pupil={...snapshot.records.find((r:any)=>r.entity==='students').value,id:'S-STAFF',grade:'8',classId:group.id};
+ const scheduleValue={id:'new-schedule',classId:group.id,extraDate:today,versions:[{from:today,weekday:0,start:'08:00',end:'10:00'}]};
+ const lesson={id:group.id+'@'+today.slice(0,7),classId:group.id,month:today.slice(0,7),title:'Fractions'};
+ const registration=op('students',pupil);
+ const batch=[op('classes',group),registration,op('schedules',scheduleValue),op('tutes',lesson)];
+ snapshot=(await request('/api/sync',{operations:batch},staff)).body;
+ assert.equal(snapshot.conflicts.length,0);assert.equal(snapshot.accepted.length,4);
+ assert.equal(snapshot.records.find((r:any)=>r.key===group.id).value.grade,'8');
+ const retry=(await request('/api/sync',{operations:[registration]},staff)).body;assert.equal(retry.accepted.length,1);
+ const editStudent=(await request('/api/sync',{operations:[op('students',{...pupil,name:'Changed'},1)]},staff)).body;assert.match(editStudent.conflicts[0].message,/role/);
+ const edited=[op('classes',{...group,name:'Evening maths',fee:2000},1),op('tutes',{...lesson,title:'Fractions and ratios'},1),op('overrides',{id:scheduleValue.id+'@'+today,scheduleId:scheduleValue.id,date:today,start:'10:00',end:'12:00',cancelled:false})];
+ snapshot=(await request('/api/sync',{operations:edited},staff)).body;assert.equal(snapshot.conflicts.length,0);assert.equal(snapshot.accepted.length,3);
+ const conflict=(await request('/api/sync',{operations:[op('overrides',{...edited[2].value,start:'14:00',end:'16:00'},1)]},staff)).body;assert.match(conflict.conflicts[0].message,/overlap/);
+ const stale=(await request('/api/sync',{operations:[op('classes',{...group,name:'Stale'},1)]},staff)).body;assert.match(stale.conflicts[0].message,/newer/);
+ for(const fields of [{grade:''},{grade:'14'},{name:'   '},{name:'x'.repeat(101)},{fee:-1},{fee:0},{fee:1.001},{fee:1000001},{fee:'2000'}]){
+  const result=(await request('/api/sync',{operations:[op('classes',{...group,...fields,id:crypto.randomUUID()})]},staff)).body;assert.equal(result.accepted.length,0);assert.equal(result.conflicts.length,1);
+ }
+ const viewer=(await request('/api/sync',{operations:batch.map(o=>({...o,id:crypto.randomUUID()}))},'viewer@example.com')).body;assert.equal(viewer.accepted.length,0);assert.equal(viewer.conflicts.length,4);
  }finally{await mf.dispose();}
 });
