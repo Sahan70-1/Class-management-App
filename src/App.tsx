@@ -1,3 +1,6 @@
+import { SessionOverview } from "./components/SessionOverview";
+import { Modal } from "./components/Modal";
+import { shortDate } from "./model";
 import { CheckCircle2, GraduationCap, WifiOff, X } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ActivityDialog } from "./components/ActivityDialog";
@@ -123,7 +126,7 @@ export function App() {
   }
   function openClass(session: Session) {
     setSelected(session.id);
-    setTab("Scan");
+    setModal("overview");
     setStudent(null);
     setQuery("");
   }
@@ -407,8 +410,31 @@ export function App() {
           notify={setToast}
         />
       )}
+      {modal === "overview" && activeSession && currentClass && (
+        <Modal
+          title="Session overview"
+          subtitle={shortDate(activeSession.date)}
+          onClose={() => setModal(null)}
+          wide
+        >
+          <SessionOverview
+            session={activeSession}
+            group={currentClass}
+            students={students}
+            attendance={attendance}
+            role={role}
+            onStart={() => {
+              setModal(null);
+              setTab("Scan");
+              setStudent(null);
+              setQuery("");
+            }}
+          />
+        </Modal>
+      )}
       {modal === "manage" && (
         <ManageClassesDialog
+          notify={setToast}
           setModal={setModal}
           role={role}
           setEditing={setEditing}

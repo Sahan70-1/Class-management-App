@@ -4,7 +4,10 @@ import {
   History as HistoryIcon,
   Plus,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+import { mutate } from "../store";
+import { ClassForm } from "./ClassForm";
+import { classGrade, money } from "../model";
 import {
   addDays,
   sessionsFor,
@@ -18,6 +21,7 @@ import {
 } from "../model";
 import { Modal } from "./Modal";
 export function ManageClassesDialog({
+  notify,
   setModal,
   role,
   setEditing,
@@ -29,6 +33,7 @@ export function ManageClassesDialog({
 }: {
   setModal: React.Dispatch<React.SetStateAction<string | null>>;
   role: Role;
+  notify: (message: string) => void;
   setEditing: React.Dispatch<React.SetStateAction<Session | null>>;
   schedules: Schedule[];
   date: string;
@@ -36,6 +41,26 @@ export function ManageClassesDialog({
   scheduleEditor: (session: Session) => void;
   overrides: Override[];
 }) {
+  const [editingClass, setEditingClass] = useState<
+    ClassGroup | null | undefined
+  >(undefined);
+  if (editingClass !== undefined && role !== "viewer")
+    return (
+      <Modal
+        title={editingClass ? "Edit class" : "Add class"}
+        subtitle="Class details and monthly fee"
+        onClose={() => setEditingClass(undefined)}
+      >
+        <ClassForm
+          existing={editingClass}
+          onSave={async (value) => {
+            await mutate("classes", value, role);
+            notify("Class saved");
+            setEditingClass(undefined);
+          }}
+        />
+      </Modal>
+    );
   return (
     <Modal
       title="Manage classes"
@@ -44,8 +69,15 @@ export function ManageClassesDialog({
       wide
     >
       <div className="modal-action-row">
-        {role === "admin" && (
+        {role !== "viewer" && (
           <>
+            <button
+              className="button primary"
+              onClick={() => setEditingClass(null)}
+            >
+              <Plus size={17} />
+              Add class
+            </button>
             <button
               className="button primary"
               onClick={() => {
@@ -74,6 +106,26 @@ export function ManageClassesDialog({
         </button>
       </div>
       <div className="manage-list">
+        {classes.map((c) => (
+          <div className="manage-row" key={c.id}>
+            <GraduationCap size={22} />
+            <div>
+              <h3>{c.name}</h3>
+              <p>
+                Grade {classGrade(c) || "not set"} · {money(c.fee)} / month
+              </p>
+            </div>
+            {role !== "viewer" && (
+              <button
+                className="button white"
+                onClick={() => setEditingClass(c)}
+              >
+                Edit class
+              </button>
+            )}
+          </div>
+        ))}
+        <h3>Timetable</h3>
         {schedules.map((s) => {
           const v =
             [...s.versions]
@@ -110,7 +162,7 @@ export function ManageClassesDialog({
                       : "Weekly timetable"}
                 </small>
               </div>
-              {role === "admin" && (
+              {role !== "viewer" && (
                 <button
                   className="button white"
                   onClick={() => {

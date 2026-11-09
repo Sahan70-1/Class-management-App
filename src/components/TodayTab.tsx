@@ -312,7 +312,7 @@ export function TodayTab({
                         {session.extra ? "One-time class" : "Weekly class"}
                       </p>
                     </div>
-                    {role === "admin" && (
+                    {role !== "viewer" && (
                       <button
                         className="icon-button class-options"
                         aria-label={"Manage " + c.name}
@@ -352,7 +352,6 @@ export function TodayTab({
                     <button
                       className={"button " + (i === 0 ? "primary" : "subtle")}
                       onClick={() => openClass(session)}
-                      disabled={session.cancelled}
                     >
                       Open class
                       <ArrowRight size={16} />
@@ -369,7 +368,7 @@ export function TodayTab({
                   A fresh space for learning. Add an extra class or choose
                   another day.
                 </p>
-                {role === "admin" && (
+                {role !== "viewer" && (
                   <button
                     className="button primary"
                     onClick={() => {

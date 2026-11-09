@@ -63,7 +63,7 @@ export function ScheduleModal({
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (role !== "admin") return;
+    if (role === "viewer") return;
     if (start >= end) {
       setError("End time must be later than the start time.");
       return;
@@ -289,7 +289,7 @@ export function ScheduleModal({
         <button
           type="submit"
           className={"button full " + (cancel ? "danger" : "primary")}
-          disabled={busy || role !== "admin"}
+          disabled={busy || role === "viewer"}
         >
           {cancel
             ? "Save cancellation"
