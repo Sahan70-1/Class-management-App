@@ -1,3 +1,4 @@
+import {nav} from './navigation';
 import {type Tab} from './navigation';
 import React, {
   useEffect,
@@ -94,16 +95,7 @@ import {
 import "./styles.css";
 
 
-const nav: { name: Tab; icon: LucideIcon; description: string }[] = [
-  { name: "Today", icon: LayoutDashboard, description: "Your teaching day" },
-  { name: "Scan", icon: ScanLine, description: "Check in a student" },
-  { name: "Students", icon: Users, description: "Your student directory" },
-  {
-    name: "Reports",
-    icon: ChartNoAxesCombined,
-    description: "A clearer picture",
-  },
-];
+
 function Icon({
   icon: I,
   size = 20,
