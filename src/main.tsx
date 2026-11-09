@@ -1,3 +1,4 @@
+import {download} from './utils';
 import {Scanner} from './components/Scanner';
 import {StudentCheckin} from './components/StudentCheckin';
 import {ClassIllustration} from './components/ClassIllustration';
@@ -2206,14 +2207,7 @@ function App() {
 
 
 
-function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob),
-    a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+
 
 function ScheduleModal({
   mode,
