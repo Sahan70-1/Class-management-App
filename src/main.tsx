@@ -1,3 +1,4 @@
+import {Avatar} from './components/Avatar';
 import {Icon} from './components/Icon';
 import {nav} from './navigation';
 import {type Tab} from './navigation';
@@ -98,27 +99,7 @@ import "./styles.css";
 
 
 
-function Avatar({
-  student,
-  size = "normal",
-}: {
-  student: Student;
-  size?: string;
-}) {
-  return (
-    <span className={"avatar " + student.color + " " + size}>
-      {student.photo ? (
-        <img src={student.photo} alt={student.name} />
-      ) : (
-        student.name
-          .split(" ")
-          .map((s) => s[0])
-          .slice(0, 2)
-          .join("")
-      )}
-    </span>
-  );
-}
+
 function Badge({
   children,
   tone = "neutral",
