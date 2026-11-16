@@ -117,7 +117,7 @@ try {
   let initial = await read(a, "records", "students:" + id);
   await a.locator(".main-nav button").nth(2).click();
   if (initial.value.removedAt) {
-    await a.getByLabel("Show removed students").check();
+    await a.getByLabel("Show archived").check();
     await a
       .locator("tr")
       .filter({ hasText: id })
@@ -156,7 +156,7 @@ try {
     await pull(b);
     initial = await read(a, "records", "students:" + id);
   }
-  await a.getByLabel("Show removed students").uncheck();
+  await a.getByLabel("Show archived").uncheck();
   const previousHistory = (await read(b, "records")).filter((r) =>
     ["attendance", "fees", "issues"].includes(r.entity),
   );
@@ -190,7 +190,7 @@ try {
     undefined,
   );
   await a.reload();
-  await a.getByRole("heading", { name: "Today’s overview." }).waitFor();
+  await a.getByRole("heading", { name: "Today." }).waitFor();
   assert.ok((await read(a, "records", "students:" + id)).value.removedAt);
   await a.locator(".main-nav button").nth(1).click();
   const png = await QRCode.toBuffer(
@@ -229,7 +229,7 @@ try {
       .count(),
     0,
   );
-  await b.getByLabel("Show removed students").check();
+  await b.getByLabel("Show archived").check();
   const row = b.locator("tr").filter({ hasText: id });
   await row.getByRole("button", { name: "Restore", exact: true }).click();
   await waitStudent(b, false);
@@ -247,7 +247,7 @@ try {
   await previewRole("staff");
   await a.locator(".main-nav button").nth(2).click();
   await a.getByRole("button", { name: "New student", exact: true }).waitFor();
-  assert.equal(await a.getByLabel("Show removed students").count(), 0);
+  assert.equal(await a.getByLabel("Show archived").count(), 0);
   await a
     .locator(".student-cell")
     .filter({ hasText: initial.value.name })
@@ -280,7 +280,7 @@ try {
     await a.getByRole("button", { name: "New student", exact: true }).count(),
     0,
   );
-  assert.equal(await a.getByLabel("Show removed students").count(), 0);
+  assert.equal(await a.getByLabel("Show archived").count(), 0);
   await previewRole("admin");
   await a.screenshot({ path: "work/removal-check.png", fullPage: true });
   assert.deepEqual(errors, []);

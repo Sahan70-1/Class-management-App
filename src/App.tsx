@@ -196,7 +196,7 @@ export function App() {
         date,
         at: new Date().toISOString(),
       },
-      "Attendance marked for " + student.name,
+      "Marked present: " + student.name,
     );
   }
   async function issueTute() {
@@ -214,7 +214,7 @@ export function App() {
         tuteId: currentTute.id,
         at: new Date().toISOString(),
       },
-      "Tute issued to " + student.name,
+      "Tute given to " + student.name,
     );
   }
   const changeHistory = [
@@ -242,11 +242,11 @@ export function App() {
       actor: o.actor,
       description:
         o.entity === "attendance"
-          ? "Attendance marked"
+          ? "Present today"
           : o.entity === "fees"
-            ? "Payment recorded"
+            ? "Paid"
             : o.entity === "issues"
-              ? "Tute issued"
+              ? "Tute given"
               : "Workspace updated",
       key: o.key,
       entity: o.entity,

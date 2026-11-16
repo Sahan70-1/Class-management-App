@@ -236,7 +236,7 @@ export function ScanTab({
             },
             {
               icon: BookOpen,
-              title: "Issue a tute",
+              title: "Give a tute",
               text: "Keep track of each month’s lesson.",
             },
           ].map(({ icon, title, text }, i) => (

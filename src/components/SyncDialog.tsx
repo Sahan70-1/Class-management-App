@@ -1,3 +1,4 @@
+import { plural } from "../utils";
 import {
   ArrowRight,
   Cloud as CloudCheck,
@@ -28,7 +29,7 @@ export function SyncDialog({
           {!data.online
             ? "Working offline"
             : data.pending.length
-              ? `${data.pending.length} updates waiting to sync`
+              ? `${plural(data.pending.length, "update")} waiting to sync`
               : "Everything is saved on this device"}
         </h3>
         <p>

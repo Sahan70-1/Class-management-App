@@ -37,7 +37,7 @@ export function TuteModal({
   const roster = students.filter((s) => s.classId === classId);
   return (
     <Modal
-      title="A lesson worth keeping"
+      title="Manage tutes"
       subtitle="Manage tute titles and monthly distribution"
       onClose={onClose}
     >
@@ -125,8 +125,8 @@ export function TuteModal({
                 {issues.some(
                   (i) => i.tuteId === current?.id && i.studentId === s.id,
                 )
-                  ? "Issued"
-                  : "Not issued"}
+                  ? "Given"
+                  : "Not given"}
               </Badge>
             </div>
           ))}

@@ -1,3 +1,4 @@
+import { plural } from "../utils";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -360,7 +361,7 @@ export function TodayTab({
                           ))}
                       </div>
                       <span>
-                        <strong>{count}</strong> students{" "}
+                        <strong>{plural(count, "student")}</strong>{" "}
                         {marked > 0 && <small>· {marked} present</small>}
                       </span>
                     </div>

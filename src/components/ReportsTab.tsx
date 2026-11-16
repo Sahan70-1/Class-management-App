@@ -257,7 +257,7 @@ export function ReportsTab({
                               </Badge>
                             ) : (
                               <Badge tone={issue ? "mint" : "amber"}>
-                                {issue ? "Issued" : "Not issued"}
+                                {issue ? "Given" : "Not given"}
                               </Badge>
                             )}
                           </td>

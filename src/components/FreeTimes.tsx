@@ -44,7 +44,7 @@ export function FreeTimes({
   const slots = freeSlots(day, duration, schedules, overrides);
   return (
     <Modal
-      title="Find a little breathing room"
+      title="Find free slot"
       subtitle="Available times across your full teaching timetable"
       onClose={onClose}
     >

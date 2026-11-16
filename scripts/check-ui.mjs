@@ -18,7 +18,7 @@ try {
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("http://127.0.0.1:8787");
-    await page.getByRole("heading", { name: "Today’s overview." }).waitFor();
+    await page.getByRole("heading", { name: "Today." }).waitFor();
     const close = () =>
       page.getByRole("button", { name: "Close dialog", exact: true }).click();
     await page
@@ -29,7 +29,7 @@ try {
       .waitFor();
     await close();
     await page
-      .getByRole("button", { name: "Find free times", exact: true })
+      .getByRole("button", { name: "Find free slot", exact: true })
       .click();
     await page.getByRole("dialog").waitFor();
     await close();
@@ -41,12 +41,12 @@ try {
     assert.equal(
       (await page.locator(".scanner-view").count()) > 0 ||
         (await page
-          .getByRole("button", { name: "Open camera", exact: true })
+          .getByRole("button", { name: "Start scanning", exact: true })
           .count()) > 0,
       true,
     );
     await navigation.nth(2).click();
-    await page.getByRole("heading", { name: "Your students." }).waitFor();
+    await page.getByRole("heading", { name: "Students." }).waitFor();
     await page
       .getByRole("button", { name: "New student", exact: true })
       .click();
@@ -62,7 +62,7 @@ try {
     await page.locator(".qr-canvas canvas").waitFor();
     await close();
     await navigation.nth(3).click();
-    await page.getByRole("heading", { name: "Reports & insights." }).waitFor();
+    await page.getByRole("heading", { name: "Reports." }).waitFor();
     await page.locator(".sync-button").click();
     await page.getByRole("button", { name: "Sync now", exact: true }).waitFor();
     await close();

@@ -205,8 +205,8 @@ export function StudentsTab({
                           {issues.some(
                             (i) => i.studentId === s.id && i.tuteId === t?.id,
                           )
-                            ? "Issued"
-                            : "Not issued"}
+                            ? "Given"
+                            : "Not given"}
                         </Badge>
                       </td>
                       <td>

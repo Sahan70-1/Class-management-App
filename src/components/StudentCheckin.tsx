@@ -120,7 +120,7 @@ export function StudentCheckin({
             <small>{tuteTitle || "No lesson title set"}</small>
           </span>
           <Badge tone={status.issued ? "mint" : "amber"}>
-            {status.issued ? "Issued" : "Not issued"}
+            {status.issued ? "Given" : "Not given"}
           </Badge>
         </div>
       </div>
@@ -132,7 +132,7 @@ export function StudentCheckin({
             disabled={status.present || session?.cancelled}
           >
             <CheckCheck size={18} />
-            {status.present ? "Attendance marked" : "Mark attendance"}
+            {status.present ? "Present today" : "Mark attendance"}
           </button>
           <div>
             <button
@@ -141,7 +141,7 @@ export function StudentCheckin({
               disabled={status.paid}
             >
               <Coins size={17} />
-              {status.paid ? "Payment recorded" : "Record payment"}
+              {status.paid ? "Paid" : "Record payment"}
             </button>
             <button
               className="button white"
@@ -149,7 +149,7 @@ export function StudentCheckin({
               disabled={status.issued || !tuteTitle}
             >
               <BookOpen size={17} />
-              {status.issued ? "Tute issued" : "Issue tute"}
+              {status.issued ? "Tute given" : "Give tute"}
             </button>
           </div>
           <p>
