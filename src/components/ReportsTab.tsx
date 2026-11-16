@@ -288,7 +288,7 @@ export function ReportsTab({
                     })
                   : "Not yet synced"}
                 {data.pending.length > 0 &&
-                  ` · ${data.pending.length} local updates pending`}
+                  ` · ${plural(data.pending.length, "local update")} pending`}
               </div>
             </div>
           </>
