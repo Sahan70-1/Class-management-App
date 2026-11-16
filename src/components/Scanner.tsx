@@ -91,10 +91,10 @@ export function Scanner({
         ) : (
           <div className="scanner-placeholder">
             <div className="qr-sample">
-              <ScanLine size={66} strokeWidth={1.1} />
+              <ScanLine size={66} strokeWidth={1.8} />
             </div>
-            <h3>One scan. A familiar face.</h3>
-            <p>Place the student’s QR inside the frame.</p>
+
+            <p>Point at the student's QR code</p>
             <button
               className="button primary"
               onClick={() => {
@@ -110,7 +110,7 @@ export function Scanner({
               disabled={disabled}
             >
               <Camera size={18} />
-              Open camera
+              Start scanning
             </button>
           </div>
         )}
@@ -122,8 +122,8 @@ export function Scanner({
         </div>
         <div className="scanner-bottom">
           <span>
-            <i />
-            {active ? "Camera active" : "Camera is paused"}
+            {active && <i />}
+            {active ? "Camera active" : ""}
           </span>
           {active && (
             <button onClick={() => setActive(false)}>Stop camera</button>
@@ -142,7 +142,7 @@ export function Scanner({
         disabled={disabled}
       >
         <ImagePlus size={17} />
-        Or upload a QR image
+        Upload QR image
         <ArrowUpRight size={14} />
       </button>
       <input
