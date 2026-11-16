@@ -5195,3 +5195,255 @@ main {
     font-size: 13px;
   }
 }
+
+/* Students */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.directory-toolbar {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.search-input {
+  border: 0;
+  border-radius: 20px;
+  background: var(--white);
+  min-height: 52px;
+  padding: 8px 16px;
+}
+.search-input input {
+  color: var(--ink);
+  font-size: 15px;
+  min-height: 36px;
+  background: transparent;
+}
+.filter-select {
+  background: var(--white);
+  border: 0;
+  border-radius: 22px;
+  padding: 6px 16px;
+  min-height: 48px;
+}
+.filter-select select {
+  font-size: 14px;
+  color: var(--ink);
+  min-height: 36px;
+  background: transparent;
+}
+.directory-toolbar > .button {
+  font-size: 14px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 0;
+}
+.directory-toolbar + .form-hint {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--green);
+  width: 20px;
+  height: 20px;
+}
+.directory-header {
+  padding: 22px;
+}
+.directory-header h3 {
+  font-size: 21px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.student-directory {
+  background: transparent;
+}
+.student-directory .directory-header {
+  padding: 12px 0 18px;
+}
+.student-directory table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+.student-directory td {
+  background: var(--white);
+  border: 0;
+  padding: 18px;
+  font-size: 13px;
+}
+.student-directory td:first-child {
+  border-radius: 26px 0 0 26px;
+}
+.student-directory td:last-child {
+  border-radius: 0 26px 26px 0;
+}
+.student-directory tbody tr {
+  position: relative;
+}
+.student-directory .student-cell {
+  position: static;
+  color: var(--ink);
+  gap: 12px;
+}
+.student-directory .student-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+}
+.student-directory .student-cell:focus-visible {
+  outline: 0;
+}
+.student-directory .student-cell:focus-visible::after {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+.student-directory .student-cell strong {
+  font-size: 15px;
+  color: var(--ink);
+}
+.student-directory .student-cell small {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
+}
+.student-directory .student-cell small::after {
+  content: none;
+}
+.student-grade {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 11px;
+  padding: 3px 9px;
+}
+.student-directory .avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+}
+.row-actions {
+  position: relative;
+  z-index: 1;
+  gap: 4px;
+}
+.row-actions > .icon-button {
+  background: var(--page);
+  color: var(--green);
+}
+.row-actions > .icon-button:last-child {
+  background: transparent;
+}
+.directory-footer {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 12px;
+  padding: 18px 4px;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .directory-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .directory-toolbar > .search-input {
+    flex-basis: 100%;
+    min-height: 52px;
+  }
+  .search-input input {
+    font-size: 13px;
+  }
+  .directory-toolbar > .filter-select {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 12px;
+  }
+  .directory-toolbar > .button {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .student-directory thead {
+    display: none;
+  }
+  .student-directory .table-scroll {
+    overflow: visible;
+  }
+  .student-directory table,
+  .student-directory tbody {
+    display: block;
+    width: 100%;
+  }
+  .student-directory tbody {
+    display: grid;
+    gap: 10px;
+  }
+  .student-directory tbody tr {
+    display: flex;
+    align-items: center;
+    border-radius: 26px;
+    background: var(--white);
+    padding: 16px 12px;
+    gap: 4px;
+  }
+  .student-directory td {
+    padding: 0;
+    background: transparent;
+  }
+  .student-directory td:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+  .student-directory td:last-child {
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .student-directory .student-cell {
+    width: 100%;
+    gap: 10px;
+    text-align: left;
+  }
+  .student-directory .student-cell > span:last-child {
+    min-width: 0;
+  }
+  .student-directory .student-cell strong {
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .student-directory .avatar {
+    width: 42px;
+    height: 44px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+  .student-directory .row-actions {
+    gap: 0;
+  }
+  .student-directory .row-actions .icon-button {
+    min-width: 44px;
+    width: 44px;
+    padding: 8px;
+  }
+  .student-directory .row-actions:has(.button) {
+    flex-wrap: wrap;
+    max-width: 88px;
+  }
+  .student-directory .row-actions .button {
+    flex-basis: 100%;
+    font-size: 12px;
+    padding: 8px;
+  }
+}
