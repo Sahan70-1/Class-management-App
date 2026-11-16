@@ -242,9 +242,9 @@ export function App() {
       actor: o.actor,
       description:
         o.entity === "attendance"
-          ? "Present today"
+          ? "Marked present"
           : o.entity === "fees"
-            ? "Paid"
+            ? "Fee paid"
             : o.entity === "issues"
               ? "Tute given"
               : "Workspace updated",

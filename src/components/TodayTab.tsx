@@ -176,7 +176,11 @@ export function TodayTab({
       <div className="tute-preview">
         <div className="section-heading">
           <h3>This month’s tutes</h3>
-          <button className="text-button" onClick={() => setModal("tutes")}>
+          <button
+            className="text-button"
+            aria-label="Manage tutes"
+            onClick={() => setModal("tutes")}
+          >
             Manage
             <ArrowRight size={14} />
           </button>
@@ -319,14 +323,11 @@ export function TodayTab({
                             : session.extra
                               ? "Extra class"
                               : i === 0
-                                ? "Up next"
-                                : "Scheduled"}
+                                ? "Weekly class"
+                                : "Weekly class"}
                         </Badge>
                       </div>
-                      <p>
-                        {c.subject} <span>·</span>{" "}
-                        {session.extra ? "One-time class" : "Weekly class"}
-                      </p>
+                      <p>{c.subject}</p>
                     </div>
                     {role !== "viewer" && (
                       <button
