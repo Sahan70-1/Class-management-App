@@ -5447,3 +5447,177 @@ input[type="radio"] {
     padding: 8px;
   }
 }
+
+/* Reports: full filter values and self-contained table scrolling. */
+.report-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.report-toolbar > div {
+  flex: 1 1 240px;
+  min-width: 240px;
+  padding: 8px 16px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--white);
+  gap: 12px;
+}
+.report-toolbar select,
+.report-toolbar input {
+  font-size: 16px;
+  color: var(--ink);
+  min-height: 36px;
+  width: 100%;
+  background: var(--white);
+  border: 0;
+}
+.report-toolbar > .badge {
+  margin: 0;
+  align-self: center;
+}
+.report-stats {
+  margin-bottom: 26px;
+}
+.report-stats .stat-mint {
+  background: var(--lilac);
+}
+.report-stats .stat-lilac {
+  background: var(--butter);
+}
+.report-stats .stat-blue {
+  background: var(--white);
+}
+.report-stats .stat-value {
+  font-size: 38px;
+}
+.report-stats .stat-foot {
+  font-size: 12px;
+}
+.report-panel {
+  overflow: hidden;
+}
+.report-panel > .section-heading {
+  padding: 24px 22px 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.report-panel > .section-heading h2 {
+  font-size: 21px;
+  max-width: none;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.report-tabs {
+  display: flex;
+  gap: 20px;
+  padding: 0 22px;
+  border-color: var(--track);
+  overflow-x: auto;
+}
+.report-tabs > button {
+  white-space: nowrap;
+  color: var(--muted);
+  min-height: 52px;
+  padding: 16px 0;
+  font-size: 14px;
+}
+.report-tabs > button.active {
+  color: var(--green);
+  border-color: var(--green);
+}
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.report-panel table {
+  min-width: 620px;
+}
+.report-panel th,
+.report-panel td {
+  font-size: 13px;
+  padding: 18px;
+  border-color: var(--track);
+  color: var(--ink);
+}
+.report-panel th {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0;
+  background: var(--page);
+  white-space: nowrap;
+}
+.report-panel td:first-child,
+.report-panel th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--white);
+  max-width: 185px;
+}
+.report-panel th:first-child {
+  background: var(--page);
+}
+.report-panel .student-cell {
+  gap: 8px;
+  white-space: normal;
+}
+.report-panel .student-cell strong {
+  font-size: 13px;
+}
+.report-panel .student-cell .avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+}
+.report-panel .directory-footer {
+  padding: 18px 22px;
+}
+@media (max-width: 760px) {
+  .report-toolbar {
+    gap: 10px;
+  }
+  .report-toolbar > div {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  .report-toolbar select,
+  .report-toolbar input {
+    font-size: 16px;
+  }
+  .report-stats .stat-value {
+    font-size: 32px;
+  }
+  .report-stats .stat-value small {
+    font-size: 15px;
+  }
+  .report-panel > .section-heading {
+    padding: 20px 18px 0;
+  }
+  .report-panel > .section-heading h2 {
+    font-size: 19px;
+  }
+  .report-tabs {
+    gap: 16px;
+    padding: 0 18px;
+  }
+  .report-tabs > button {
+    font-size: 13px;
+  }
+  .report-tabs > button svg {
+    display: none;
+  }
+  .report-panel td:first-child,
+  .report-panel th:first-child {
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+  }
+  .report-panel th,
+  .report-panel td {
+    padding: 14px;
+  }
+}

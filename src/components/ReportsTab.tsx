@@ -1,3 +1,4 @@
+import { plural } from "../utils";
 import { reportRoster } from "../reports";
 import {
   BookOpen,
@@ -83,10 +84,12 @@ export function ReportsTab({
             }}
           />
         </div>
-        <Badge tone="mint">
-          <RefreshCw size={12} />
-          Includes locally saved updates
-        </Badge>
+        {data.pending.length > 0 && (
+          <Badge tone="mint">
+            <RefreshCw size={12} />
+            Unsynced changes included
+          </Badge>
+        )}
       </div>
       {(() => {
         const roster = reportRoster(
@@ -116,14 +119,14 @@ export function ReportsTab({
             <div className="stats-grid report-stats">
               <Stat
                 icon={CheckCheck}
-                label="Attendance records"
+                label="Attendance"
                 value={monthAttendance.length}
                 foot={monthText(reportMonth)}
                 tone="mint"
               />
               <Stat
                 icon={Coins}
-                label="Monthly fees collected"
+                label="Fees collected"
                 value={
                   <>
                     <small>LKR</small>{" "}
@@ -132,12 +135,12 @@ export function ReportsTab({
                       .toLocaleString()}
                   </>
                 }
-                foot={monthFees.length + " payments recorded"}
+                foot={plural(monthFees.length, "payment")}
                 tone="peach"
               />
               <Stat
                 icon={BookOpen}
-                label="Tutes distributed"
+                label="Tutes given"
                 value={
                   <>
                     {issued.length}
@@ -149,7 +152,7 @@ export function ReportsTab({
               />
               <Stat
                 icon={Users}
-                label="Active students"
+                label="Students"
                 value={activeRoster.length}
                 foot={classes.find((c) => c.id === reportClass)?.name || ""}
                 tone="blue"
@@ -158,20 +161,23 @@ export function ReportsTab({
             <div className="panel report-panel">
               <div className="section-heading">
                 <div>
-                  <h2>Every student, a clearer picture</h2>
-                  <p>
+                  <h2>
                     {classes.find((c) => c.id === reportClass)?.name} ·{" "}
                     {monthText(reportMonth)}
-                  </p>
+                  </h2>
                 </div>
-                <Badge tone="amber">
-                  {
-                    activeRoster.filter(
-                      (s) => !monthFees.some((f) => f.studentId === s.id),
-                    ).length
-                  }{" "}
-                  unpaid
-                </Badge>
+                {activeRoster.some(
+                  (s) => !monthFees.some((f) => f.studentId === s.id),
+                ) && (
+                  <Badge tone="amber">
+                    {
+                      activeRoster.filter(
+                        (s) => !monthFees.some((f) => f.studentId === s.id),
+                      ).length
+                    }{" "}
+                    unpaid
+                  </Badge>
+                )}
               </div>
               <div className="report-tabs">
                 {[
@@ -201,21 +207,21 @@ export function ReportsTab({
                 <table>
                   <thead>
                     <tr>
-                      <th>STUDENT</th>
-                      <th>STUDENT ID</th>
+                      <th>Student</th>
+                      <th>ID</th>
                       <th>
                         {reportType === "attendance"
-                          ? "CLASSES ATTENDED"
+                          ? "Sessions"
                           : reportType === "fees"
-                            ? "PAYMENT STATUS"
-                            : "TUTE STATUS"}
+                            ? "Paid"
+                            : "Tutes given"}
                       </th>
                       <th>
                         {reportType === "attendance"
-                          ? "LATEST CHECK-IN"
+                          ? "Latest check-in"
                           : reportType === "fees"
-                            ? "AMOUNT"
-                            : "LESSON TITLE"}
+                            ? "Amount"
+                            : "Lesson title"}
                       </th>
                     </tr>
                   </thead>
@@ -243,7 +249,7 @@ export function ReportsTab({
                               <Badge
                                 tone={attended.length ? "mint" : "neutral"}
                               >
-                                {attended.length} sessions
+                                {plural(attended.length, "session")}
                               </Badge>
                             ) : reportType === "fees" ? (
                               <Badge tone={fee ? "mint" : "amber"}>
@@ -259,11 +265,11 @@ export function ReportsTab({
                             {reportType === "attendance"
                               ? attended[0]
                                 ? shortDate(attended[0].date)
-                                : "—"
+                                : "Not recorded"
                               : reportType === "fees"
                                 ? fee
                                   ? money(fee.amount)
-                                  : "—"
+                                  : "Not recorded"
                                 : t?.title || "Not set"}
                           </td>
                         </tr>
