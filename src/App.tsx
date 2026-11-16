@@ -400,15 +400,6 @@ export function App() {
               data={data}
             />
           )}
-          <footer className="page-footer">
-            <span>
-              <GraduationCap size={15} />
-              Built for the way you teach.
-            </span>
-            <span>
-              Classroom <i /> Fictional sample data
-            </span>
-          </footer>
         </main>
       </div>
       <BottomNavigation tab={tab} navigate={navigate} />

@@ -33,36 +33,28 @@ export function PageHeading({
   return (
     <div className="page-heading">
       <div>
-        <div className="eyebrow">
-          {tab === "Today"
-            ? "YOUR DAY, AT A GLANCE"
-            : tab === "Scan"
-              ? "A WARM WELCOME STARTS HERE"
-              : tab === "Students"
-                ? "EVERY STUDENT, IN ONE PLACE"
-                : "THE NUMBERS BEHIND YOUR CLASSES"}
-        </div>
+        {tab === "Today" && (
+          <div className="eyebrow">
+            {dateObject(date).toLocaleDateString("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "short",
+              timeZone: "Asia/Colombo",
+            })}
+          </div>
+        )}
         <h1>
           {tab === "Today"
-            ? "Today’s overview"
+            ? "Today"
             : tab === "Scan"
               ? student
                 ? "Student check-in"
                 : "Scan a student"
               : tab === "Students"
-                ? "Your students"
-                : "Reports & insights"}
+                ? "Students"
+                : "Reports"}
           <span className="heading-dot">.</span>
         </h1>
-        <p>
-          {tab === "Today"
-            ? "A little less admin. A little more teaching."
-            : tab === "Scan"
-              ? "Check attendance, fees and tutes. One action at a time."
-              : tab === "Students"
-                ? "Familiar faces. Everything you need to know."
-                : "Keep track of progress, payments and everything in between."}
-        </p>
       </div>
       <div className="page-heading-actions">
         {role === "viewer" && (
@@ -73,6 +65,7 @@ export function PageHeading({
         {tab === "Today" ? (
           <button
             className="button white date-button"
+            aria-label="Toggle calendar"
             onClick={() => setCalendar(!calendar)}
           >
             <CalendarDays size={17} />
@@ -96,7 +89,11 @@ export function PageHeading({
             <Plus size={18} /> New student
           </button>
         ) : tab === "Reports" ? (
-          <button className="button white" onClick={() => exportReport()}>
+          <button
+            className="button white"
+            aria-label="Export report"
+            onClick={() => exportReport()}
+          >
             <Download size={17} />
             Export report
           </button>
