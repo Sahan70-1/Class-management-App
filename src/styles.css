@@ -5621,3 +5621,497 @@ input[type="radio"] {
     padding: 14px;
   }
 }
+
+/* Dialogs, forms, profile, timetable and free slots: structure retained. */
+.modal {
+  background: var(--page);
+  color: var(--ink);
+  border: 0;
+  border-radius: 28px;
+  padding: 26px;
+  max-height: calc(100dvh - 32px);
+}
+.modal::backdrop {
+  background: rgb(20 32 26 / 45%);
+  backdrop-filter: none;
+}
+.modal-heading h2 {
+  font-size: 26px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.modal-heading p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.modal-heading > .icon-button {
+  background: var(--white);
+  margin: 0;
+  flex-shrink: 0;
+}
+.modal :is(p, small, .form-hint, .overview-details) {
+  overflow-wrap: anywhere;
+}
+.form {
+  gap: 18px;
+}
+.form label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.form input:not([type="checkbox"]):not([type="radio"]),
+.form select,
+.form textarea {
+  background: var(--white);
+  border: 1px solid var(--track);
+  border-radius: 18px;
+  min-height: 48px;
+  padding: 12px 14px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.form input:disabled,
+.form select:disabled {
+  background: var(--track);
+  color: var(--muted);
+}
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.form-hint,
+.form legend {
+  font-size: 13px;
+  color: var(--muted);
+}
+.form .checkbox-label {
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.form .radio-card {
+  background: var(--white);
+  border-color: var(--track);
+  border-radius: 20px;
+  min-height: 60px;
+}
+.radio-card strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.radio-card small {
+  color: var(--muted);
+}
+.callout,
+.offline-banner {
+  border: 0;
+  background: var(--light-green);
+  color: var(--chip-ink);
+  border-radius: 20px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.callout.warning,
+.offline-banner {
+  background: var(--butter);
+  color: var(--ink);
+}
+.callout svg,
+.offline-banner svg {
+  color: inherit;
+}
+.offline-banner .badge {
+  background: var(--white);
+  color: var(--ink);
+  font-size: 12px;
+}
+.modal .button {
+  min-height: 44px;
+  font-size: 14px;
+  border-radius: 22px;
+  padding: 10px 16px;
+}
+.modal-action-row {
+  gap: 10px;
+}
+.manage-row {
+  gap: 12px;
+  padding: 18px 0;
+  flex-wrap: wrap;
+}
+.manage-row > div {
+  min-width: 0;
+  flex: 1;
+}
+.manage-row h3 {
+  font-size: 18px;
+}
+.manage-row p,
+.manage-row small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.manage-row > .button {
+  min-height: 44px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.slot-list > button {
+  background: var(--white);
+  border: 1px solid var(--track);
+  border-radius: 18px;
+  padding: 14px;
+  min-height: 48px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.slot-list > button.selected {
+  background: var(--light-green);
+  border-color: var(--green);
+  color: var(--chip-ink);
+}
+.radio-dot {
+  border-color: var(--muted);
+}
+.selected .radio-dot {
+  background: var(--green);
+  border-color: var(--green);
+}
+.free-suggestions > .button {
+  min-height: 44px;
+}
+.photo-upload {
+  background: var(--white);
+  border: 1px dashed var(--green);
+  border-radius: 20px;
+  color: var(--green);
+}
+.photo-upload > span,
+.photo-upload small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.profile-header h2,
+.qr-profile h2 {
+  font-size: 25px;
+}
+.profile-header p,
+.qr-profile p,
+.profile-header small,
+.qr-profile div > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.profile-header .avatar,
+.qr-profile .avatar {
+  border-radius: 22px;
+}
+.profile-details {
+  background: var(--white);
+  border: 0;
+  border-radius: 24px;
+  padding: 8px 18px;
+}
+.profile-details > div {
+  padding: 14px 0;
+  font-size: 13px;
+  border-color: var(--track);
+}
+.profile-details span {
+  color: var(--muted);
+}
+.profile-details strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.profile-stats {
+  gap: 10px;
+}
+.profile-stats > div {
+  padding: 14px 6px;
+  border-radius: 20px;
+  background: var(--lilac);
+  min-width: 0;
+}
+.profile-stats > div:nth-child(2) {
+  background: var(--peach);
+}
+.profile-stats > div:nth-child(3) {
+  background: var(--butter);
+}
+.profile-stats strong {
+  font-size: 20px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.profile-stats span {
+  color: var(--ink);
+  font-size: 12px;
+}
+.spaced-title {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.5;
+  margin-top: 24px;
+}
+.detail-row {
+  font-size: 13px;
+  color: var(--muted);
+  gap: 10px;
+  border-color: var(--track);
+}
+.detail-row strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.qr-canvas {
+  background: var(--white);
+  border: 0;
+  border-radius: 24px;
+  padding: 20px;
+}
+.qr-canvas strong {
+  color: var(--ink);
+}
+.qr-canvas > span {
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.history-row {
+  border-color: var(--track);
+}
+.history-row strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.history-row p,
+.history-row small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sync-detail h3 {
+  font-size: 20px;
+}
+.sync-detail p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.conflict-item {
+  background: var(--butter);
+  border-radius: 20px;
+  padding: 16px;
+}
+.conflict-item p {
+  color: var(--ink);
+}
+.settings-account {
+  background: var(--white);
+  border: 0;
+  border-radius: 22px;
+  padding: 16px;
+}
+.settings-account strong {
+  font-size: 14px;
+}
+.settings-account p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.tute-roster > div {
+  padding: 14px 0;
+  gap: 10px;
+  border-color: var(--track);
+}
+.tute-roster strong {
+  font-size: 14px;
+}
+.tute-roster .badge {
+  flex-shrink: 0;
+}
+.payment-student strong {
+  font-size: 16px;
+}
+.payment-student div > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.payment-amount {
+  background: var(--peach);
+  border: 0;
+  border-radius: 26px;
+}
+.payment-amount > span,
+.payment-amount small {
+  font-size: 13px;
+  color: var(--ink);
+}
+.payment-amount strong {
+  font-size: 38px;
+  color: var(--ink);
+}
+.overview-details {
+  font-size: 14px;
+  color: var(--muted);
+}
+.overview-counts {
+  border-radius: 24px;
+  padding: 20px;
+  background: var(--light-green);
+}
+.overview-roster .detail-row {
+  padding: 14px 0;
+}
+.empty-state {
+  background: var(--white);
+  border: 0;
+  border-radius: 26px;
+  padding: 28px 20px;
+}
+.empty-state h3 {
+  font-size: 20px;
+  color: var(--ink);
+}
+.empty-state p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.checkin-card {
+  border-radius: 28px;
+  padding: 24px;
+}
+.checkin-person {
+  gap: 16px;
+}
+.checkin-person h2 {
+  font-size: 28px;
+  color: var(--ink);
+  margin-top: 8px;
+}
+.checkin-person p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.checkin-person .text-button {
+  font-size: 13px;
+}
+.checkin-status > div {
+  border: 0;
+  background: var(--butter);
+  padding: 16px;
+  border-radius: 20px;
+  gap: 10px;
+}
+.checkin-status > div.done {
+  background: var(--light-green);
+}
+.checkin-status > div > svg {
+  color: var(--ink);
+}
+.checkin-status strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.checkin-status small {
+  font-size: 12px;
+  color: var(--ink);
+}
+.checkin-status .badge {
+  background: var(--white);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.checkin-actions .button {
+  font-size: 14px;
+  min-height: 48px;
+}
+.checkin-actions p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.attendance-days > div {
+  border: 0;
+  background: var(--page);
+  border-radius: 18px;
+  padding: 12px;
+}
+.attendance-days > div.present {
+  background: var(--light-green);
+}
+.attendance-days > div.current {
+  background: var(--butter);
+}
+.attendance-days strong,
+.attendance-days div > span {
+  color: var(--ink);
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .modal {
+    width: calc(100% - 24px);
+    padding: 22px 18px;
+  }
+  .modal-heading h2 {
+    font-size: 24px;
+  }
+  .modal-heading {
+    gap: 8px;
+  }
+  .modal .form input:not([type="checkbox"]):not([type="radio"]),
+  .modal .form select,
+  .modal .form textarea {
+    font-size: 16px;
+  }
+  .register-top {
+    gap: 12px;
+  }
+  .manage-row h3 {
+    font-size: 17px;
+  }
+  .manage-row > .button {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+  .profile-header h2,
+  .qr-profile h2 {
+    font-size: 23px;
+  }
+  .profile-stats strong {
+    font-size: 17px;
+  }
+  .profile-stats span {
+    font-size: 11px;
+  }
+  .checkin-card {
+    padding: 20px 16px;
+  }
+  .checkin-person {
+    gap: 12px;
+  }
+  .checkin-person .avatar.large {
+    width: 60px;
+    height: 68px;
+    border-radius: 20px;
+  }
+  .checkin-person h2 {
+    font-size: 24px;
+  }
+  .checkin-status > div {
+    padding: 14px 12px;
+  }
+  .checkin-status small {
+    max-width: 155px;
+  }
+  .checkin-actions .button {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .checkin-actions > div {
+    gap: 8px;
+  }
+  .tute-roster strong {
+    font-size: 13px;
+  }
+}
