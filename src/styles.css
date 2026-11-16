@@ -4522,3 +4522,474 @@ main {
     max-width: calc(100% - 32px);
   }
 }
+
+/* Today */
+.welcome-banner {
+  display: block;
+  background: var(--green);
+  color: var(--white);
+  border: 0;
+  border-radius: 28px;
+  padding: 24px;
+  min-height: 240px;
+  margin-bottom: 12px;
+}
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.welcome-label {
+  display: inline-flex;
+  background: var(--chip-ink);
+  color: var(--white);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+.welcome-content {
+  max-width: none;
+}
+.welcome-content h2 {
+  color: var(--white);
+  font-size: 38px;
+  line-height: 1.12;
+  margin: 24px 0;
+  letter-spacing: -0.03em;
+}
+.welcome-content h2 > span {
+  font-weight: 400;
+}
+.hero-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hero-location {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.welcome-content .button {
+  margin: 0;
+  background: var(--butter);
+  color: var(--ink);
+  border: 0;
+  min-height: 48px;
+  padding: 12px 18px;
+  font-size: 14px;
+}
+.welcome-content .button:hover {
+  background: var(--white);
+}
+.stats-grid {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.stat-card {
+  padding: 22px;
+  border: 0;
+  border-radius: 26px;
+  min-width: 0;
+}
+.stat-mint {
+  background: var(--butter);
+}
+.stat-blue {
+  background: var(--lilac);
+}
+.stat-peach {
+  background: var(--peach);
+}
+.stat-lilac {
+  background: var(--white);
+}
+.stat-top {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  align-items: flex-start;
+  gap: 8px;
+}
+.stat-icon {
+  background: transparent;
+  color: var(--ink);
+  width: 24px;
+  height: 24px;
+}
+.stat-value {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 18px 0 0;
+  overflow-wrap: anywhere;
+}
+.stat-value small {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.stat-foot {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: normal;
+  margin-top: 8px;
+}
+.tute-preview {
+  margin: 0 0 28px;
+  padding: 22px 24px;
+}
+.tute-preview .section-heading {
+  margin: 0 0 6px;
+}
+.tute-preview .section-heading h3 {
+  font-size: 18px;
+}
+.tute-mini {
+  padding: 14px 0;
+}
+.tute-mini strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tute-mini p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 10px;
+}
+.tute-mini > div > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.progress-track {
+  height: 7px;
+  background: var(--track);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-track > span {
+  background: var(--green);
+  border-radius: 10px;
+}
+.today-grid {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+}
+.section-heading h2 {
+  font-size: 22px;
+}
+.section-heading h3 {
+  font-size: 18px;
+}
+.segmented {
+  background: var(--track);
+  border-radius: 22px;
+  padding: 4px;
+}
+.segmented > button {
+  min-height: 44px;
+  border-radius: 20px;
+  color: var(--muted);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.segmented > button.active {
+  background: var(--white);
+  color: var(--ink);
+}
+.class-card {
+  background: var(--white);
+  color: var(--ink);
+  padding: 22px;
+  border: 0;
+  margin-bottom: 12px;
+}
+.class-card-top {
+  gap: 12px;
+  align-items: flex-start;
+}
+.class-name {
+  min-width: 0;
+}
+.class-name > div {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.class-name h3 {
+  font-size: 24px;
+  color: var(--ink);
+}
+.class-name p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.class-icon {
+  background: var(--light-green);
+  color: var(--chip-ink);
+  border-radius: 16px;
+  height: 48px;
+  width: 48px;
+}
+.class-meta {
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.class-meta svg,
+.class-meta > span {
+  color: var(--muted);
+}
+.class-footer {
+  padding-top: 18px;
+  margin-top: 18px;
+  border-color: var(--track);
+  gap: 8px;
+}
+.class-students {
+  font-size: 12px;
+  gap: 8px;
+  color: var(--muted);
+}
+.class-students small {
+  color: var(--green);
+}
+.avatar.tiny {
+  width: 28px;
+  height: 28px;
+  font-size: 9px;
+  border: 2px solid var(--white);
+}
+.class-footer > .button {
+  background: var(--green);
+  color: var(--white);
+  min-height: 44px;
+  font-size: 14px;
+  padding: 10px 16px;
+}
+.class-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 8px;
+}
+.class-tools > button {
+  font-size: 13px;
+  color: var(--green);
+  min-height: 44px;
+  gap: 6px;
+}
+.class-tools > span {
+  display: none;
+}
+.activity-title {
+  margin-top: 28px;
+}
+.activity-list {
+  padding: 0 18px;
+}
+.activity-row {
+  gap: 12px;
+  padding: 16px 0;
+  border-color: var(--track);
+  align-items: center;
+}
+.activity-row strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.activity-row p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.activity-row > div {
+  min-width: 0;
+}
+.activity-row > time {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+.activity-pending {
+  color: var(--green);
+}
+.mini-calendar {
+  padding: 24px;
+}
+.calendar-heading h3 {
+  font-size: 18px;
+  color: var(--ink);
+}
+.calendar-grid {
+  gap: 0;
+}
+.calendar-grid > button {
+  min-height: 44px;
+  max-height: none;
+  aspect-ratio: auto;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 50%;
+}
+.calendar-grid > button.selected {
+  background: var(--green);
+  color: var(--white);
+}
+.calendar-grid > button.today:not(.selected) {
+  color: var(--green);
+  background: var(--light-green);
+}
+.calendar-grid .has-class {
+  background: var(--green);
+}
+.calendar-grid .selected .has-class {
+  background: var(--white);
+}
+.calendar-grid > .weekday {
+  font-size: 12px;
+  color: var(--muted);
+}
+.calendar-legend {
+  font-size: 11px;
+  color: var(--muted);
+  gap: 7px;
+}
+.calendar-legend i {
+  background: var(--green);
+}
+.week-strip {
+  gap: 0;
+  background: var(--white);
+  padding: 8px 0;
+  border-radius: 22px;
+}
+.week-strip > button {
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 0;
+}
+.week-strip > .icon-button {
+  width: 24px;
+  min-width: 24px;
+}
+.week-strip > button.active {
+  background: var(--green);
+  color: var(--white);
+}
+.week-strip > button.active strong,
+.week-strip > button.active span {
+  color: var(--white);
+}
+.week-strip .has-class {
+  background: var(--green);
+}
+@media (max-width: 1100px) {
+  .today-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .today-aside {
+    display: block;
+  }
+}
+@media (max-width: 760px) {
+  .welcome-banner {
+    padding: 22px;
+    min-height: 240px;
+  }
+  .hero-top {
+    font-size: 11px;
+    gap: 6px;
+  }
+  .welcome-label {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+  .welcome-content h2 {
+    font-size: 34px;
+    margin: 24px 0;
+  }
+  .hero-location {
+    font-size: 12px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    padding: 18px 16px;
+  }
+  .stat-top {
+    font-size: 13px;
+    gap: 4px;
+  }
+  .stat-icon {
+    display: none;
+  }
+  .stat-value {
+    font-size: 38px;
+    margin-top: 18px;
+  }
+  .stat-value small {
+    font-size: 16px;
+  }
+  .tute-preview {
+    padding: 18px 20px;
+    margin-bottom: 26px;
+  }
+  .tute-preview .section-heading h3 {
+    font-size: 17px;
+  }
+  .section-heading h2 {
+    font-size: 21px;
+  }
+  .section-title {
+    gap: 6px;
+  }
+  .class-card {
+    padding: 20px;
+  }
+  .class-icon {
+    display: none;
+  }
+  .class-name h3 {
+    font-size: 23px;
+  }
+  .class-name p {
+    font-size: 13px;
+  }
+  .class-footer > .button {
+    font-size: 14px;
+  }
+  .class-students {
+    font-size: 12px;
+  }
+  .activity-row strong {
+    font-size: 13px;
+  }
+  .activity-row p {
+    font-size: 12px;
+  }
+  .activity-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .mini-calendar {
+    padding: 20px;
+  }
+}
