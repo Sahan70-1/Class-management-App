@@ -1,7 +1,7 @@
 import {
   Bell,
   ChevronRight,
-  Cloud as CloudCheck,
+  Check as CloudCheck,
   CloudOff,
   Menu,
   RefreshCw,
@@ -31,13 +31,16 @@ export function Topbar({
         >
           <Menu />
         </button>
-        <span className="desktop-only">Workspace</span>
-        <ChevronRight size={14} className="desktop-only" />
-        <strong>{tab}</strong>
+        <strong className="header-wordmark">
+          classroom<span className="brand-dot">.</span>
+        </strong>
       </div>
       <div className="topbar-right">
         <button
-          className={"sync-button " + (!data.online ? "offline" : "")}
+          className={
+            "sync-button " +
+            (!data.online ? "offline" : data.pending.length ? "waiting" : "")
+          }
           onClick={() => setModal("sync")}
         >
           <Icon
@@ -53,9 +56,9 @@ export function Topbar({
               : data.syncing
                 ? "Syncing"
                 : data.pending.length
-                  ? data.pending.length + " pending"
+                  ? "Waiting to sync"
                   : data.lastSync
-                    ? "All changes synced"
+                    ? "Synced"
                     : "Saved locally"}
           </span>
           <i />
@@ -74,7 +77,7 @@ export function Topbar({
           aria-label="Workspace settings"
           onClick={() => setModal("settings")}
         >
-          T
+          {data.email?.charAt(0).toUpperCase() || "T"}
         </button>
       </div>
     </header>

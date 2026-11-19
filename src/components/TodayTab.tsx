@@ -1,3 +1,4 @@
+import { plural } from "../utils";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -104,95 +105,112 @@ export function TodayTab({
 }) {
   return (
     <>
-      <section className="welcome-banner">
-        <div className="welcome-content">
-          <span className="welcome-label">
-            <Sun size={15} /> A GOOD DAY TO MAKE A DIFFERENCE
-          </span>
-          <h2>
-            Small steps.
-            <br />
-            Brighter futures.
-          </h2>
-          <p>
-            {sessions.filter((s) => !s.cancelled).length ? (
-              <>
-                You have{" "}
-                <strong>
-                  {sessions.filter((s) => !s.cancelled).length} classes
-                </strong>{" "}
-                lined up {date === today ? "today" : "on " + shortDate(date)}.
-                <br className="mobile-only" /> Let’s make them count.
-              </>
-            ) : (
-              <>
-                A little breathing room in your schedule.
-                <br />
-                Plan your next great class.
-              </>
-            )}
-          </p>
-          <button
-            className="button primary"
-            onClick={() => {
-              if (activeSession) openClass(activeSession);
-              else setModal("free");
-            }}
-          >
-            <ScanLine size={17} />
-            {activeSession ? "Start student check-in" : "Find a free time"}
-            <ArrowRight size={16} />
-          </button>
-        </div>
-        <ClassIllustration />
-        <div className="welcome-date">
-          <span>
-            {dateObject(date).toLocaleDateString("en-GB", {
-              weekday: "long",
-              timeZone: "Asia/Colombo",
-            })}
-          </span>
-          <strong>{dateObject(date).getDate()}</strong>
-          <span>{monthText(month)}</span>
-        </div>
-      </section>
+      {activeSession && (
+        <section className="welcome-banner">
+          <div className="hero-top">
+            <span className="welcome-label">Next class</span>
+            <span>
+              {timeText(activeSession.start)} – {timeText(activeSession.end)}
+            </span>
+          </div>
+          <div className="welcome-content">
+            <h2>
+              {classes.find((c) => c.id === activeSession.classId)?.name}
+              <br />
+              <span>
+                {classes.find((c) => c.id === activeSession.classId)?.subject}
+              </span>
+            </h2>
+            <div className="hero-bottom">
+              <span className="hero-location">
+                <MapPin size={17} />
+                {classes.find((c) => c.id === activeSession.classId)?.room}
+              </span>
+              <button
+                className="button primary"
+                onClick={() => {
+                  if (activeSession) openClass(activeSession);
+                  else setModal("free");
+                }}
+              >
+                Check-in <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
       <div className="stats-grid">
         <Stat
           icon={GraduationCap}
           label="Classes today"
           value={sessions.filter((s) => !s.cancelled).length}
-          foot="Let’s make every lesson count"
+          foot=""
           tone="mint"
         />
         <Stat
           icon={CheckCheck}
-          label="Attendance marked"
+          label="Present today"
           value={present}
-          foot={
-            present
-              ? "Students checked in today"
-              : "Ready for your first check-in"
-          }
+          foot=""
           tone="blue"
         />
         <Stat
           icon={Coins}
-          label="Fees collected"
+          label="Paid today"
           value={
             <>
               <small>LKR</small> {collected.toLocaleString()}
             </>
           }
-          foot="Payments recorded today"
+          foot=""
           tone="peach"
         />
         <Stat
           icon={Users}
-          label="Total students"
+          label="Students"
           value={students.length}
-          foot="Growing, one student at a time"
+          foot=""
           tone="lilac"
         />
+      </div>
+      <div className="tute-preview">
+        <div className="section-heading">
+          <h3>This month’s tutes</h3>
+          <button
+            className="text-button"
+            aria-label="Manage tutes"
+            onClick={() => setModal("tutes")}
+          >
+            Manage
+            <ArrowRight size={14} />
+          </button>
+        </div>
+        {classes.map((c) => {
+          const t = tutes.find((t) => t.classId === c.id && t.month === month);
+          const total = students.filter((s) => s.classId === c.id).length;
+          const count = issues.filter(
+            (i) =>
+              i.tuteId === t?.id && students.some((s) => s.id === i.studentId),
+          ).length;
+          return (
+            <div className="tute-mini" key={c.id}>
+              <div>
+                <strong>{c.name}</strong>
+                <span>
+                  {count}/{total}
+                </span>
+              </div>
+              <p>{t?.title || "Lesson title not set"}</p>
+              <div className="progress-track">
+                <span
+                  style={{
+                    width: (total ? (count / total) * 100 : 0) + "%",
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
       <div className="today-grid">
         <div className="today-main">
@@ -305,14 +323,11 @@ export function TodayTab({
                             : session.extra
                               ? "Extra class"
                               : i === 0
-                                ? "Up next"
-                                : "Scheduled"}
+                                ? "Weekly class"
+                                : "Weekly class"}
                         </Badge>
                       </div>
-                      <p>
-                        {c.subject} <span>·</span>{" "}
-                        {session.extra ? "One-time class" : "Weekly class"}
-                      </p>
+                      <p>{c.subject}</p>
                     </div>
                     {role !== "viewer" && (
                       <button
@@ -328,7 +343,7 @@ export function TodayTab({
                     <span>
                       <Clock size={15} />
                       {timeText(session.start)}{" "}
-                      <span className="time-dash">—</span>{" "}
+                      <span className="time-dash">–</span>{" "}
                       {timeText(session.end)}
                     </span>
                     <span>
@@ -347,7 +362,7 @@ export function TodayTab({
                           ))}
                       </div>
                       <span>
-                        <strong>{count}</strong> students{" "}
+                        <strong>{plural(count, "student")}</strong>{" "}
                         {marked > 0 && <small>· {marked} present</small>}
                       </span>
                     </div>
@@ -355,7 +370,7 @@ export function TodayTab({
                       className={"button " + (i === 0 ? "primary" : "subtle")}
                       onClick={() => openClass(session)}
                     >
-                      Open class
+                      Open
                       <ArrowRight size={16} />
                     </button>
                   </div>
@@ -366,10 +381,7 @@ export function TodayTab({
               <div className="empty-state">
                 <CalendarDays size={35} />
                 <h3>No classes scheduled</h3>
-                <p>
-                  A fresh space for learning. Add an extra class or choose
-                  another day.
-                </p>
+                <p>Add an extra class or choose another day.</p>
                 {role !== "viewer" && (
                   <button
                     className="button primary"
@@ -394,7 +406,7 @@ export function TodayTab({
             <span />
             <button onClick={() => setModal("free")}>
               <CalendarClock size={17} />
-              Find free times
+              Find free slot
               <ArrowUpRight size={15} />
             </button>
           </div>
@@ -430,12 +442,25 @@ export function TodayTab({
                     />
                   </span>
                   <div>
-                    <strong>{r.description}</strong>
+                    <strong>
+                      {r.entity === "attendance"
+                        ? "Marked present"
+                        : r.entity === "fees"
+                          ? "Fee paid"
+                          : r.entity === "issues"
+                            ? "Tute given"
+                            : r.description}
+                    </strong>
                     <p>
                       {students.find(
                         (s) => r.key.startsWith(s.id + "@") || r.key === s.id,
                       )?.name || "Class timetable"}{" "}
-                      <span>·</span> {r.pending ? "Saved locally" : "Synced"}
+                      {r.pending && (
+                        <span className="activity-pending">
+                          {" "}
+                          · Waiting to sync
+                        </span>
+                      )}
                     </p>
                   </div>
                   <time>
@@ -469,62 +494,6 @@ export function TodayTab({
             schedules={schedules}
             overrides={overrides}
           />
-          <div className="quick-actions">
-            <div className="section-heading">
-              <h3>Make room for learning</h3>
-              <CalendarClock size={19} />
-            </div>
-            <p>
-              An extra lesson? A timetable change?
-              <br />
-              We’ll find the time.
-            </p>
-            <button className="button white" onClick={() => setModal("free")}>
-              Find a free time
-              <ArrowRight size={16} />
-            </button>
-          </div>
-          <div className="tute-preview">
-            <div className="section-heading">
-              <h3>This month’s tutes</h3>
-              <span className="book-icon">
-                <BookOpen size={19} />
-              </span>
-            </div>
-            {classes.slice(0, 2).map((c) => {
-              const t = tutes.find(
-                (t) => t.classId === c.id && t.month === month,
-              );
-              const total = students.filter((s) => s.classId === c.id).length;
-              const count = issues.filter(
-                (i) =>
-                  i.tuteId === t?.id &&
-                  students.some((s) => s.id === i.studentId),
-              ).length;
-              return (
-                <div className="tute-mini" key={c.id}>
-                  <div>
-                    <strong>{c.name}</strong>
-                    <span>
-                      {count} / {total} issued
-                    </span>
-                  </div>
-                  <p>{t?.title || "Lesson title not set"}</p>
-                  <div className="progress-track">
-                    <span
-                      style={{
-                        width: (total ? (count / total) * 100 : 0) + "%",
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            <button className="text-button" onClick={() => setModal("tutes")}>
-              Manage tutes
-              <ArrowRight size={14} />
-            </button>
-          </div>
         </aside>
       </div>
     </>

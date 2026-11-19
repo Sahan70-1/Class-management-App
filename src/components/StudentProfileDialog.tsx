@@ -115,7 +115,7 @@ export function StudentProfileDialog({
           <strong>
             {issues.filter((i) => i.studentId === student.id).length}
           </strong>
-          <span>Tutes issued</span>
+          <span>Tutes given</span>
         </div>
       </div>
       <div className="modal-action-row">

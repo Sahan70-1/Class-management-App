@@ -15,7 +15,7 @@ export function Stat({
   tone: string;
 }) {
   return (
-    <div className="stat-card">
+    <div className={"stat-card stat-" + tone}>
       <div className="stat-top">
         <span>{label}</span>
         <span className={"stat-icon " + tone}>
@@ -23,7 +23,7 @@ export function Stat({
         </span>
       </div>
       <strong className="stat-value">{value}</strong>
-      <span className="stat-foot">{foot}</span>
+      {foot && <span className="stat-foot">{foot}</span>}
     </div>
   );
 }

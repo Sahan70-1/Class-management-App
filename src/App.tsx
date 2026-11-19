@@ -196,7 +196,7 @@ export function App() {
         date,
         at: new Date().toISOString(),
       },
-      "Attendance marked for " + student.name,
+      "Marked present: " + student.name,
     );
   }
   async function issueTute() {
@@ -214,7 +214,7 @@ export function App() {
         tuteId: currentTute.id,
         at: new Date().toISOString(),
       },
-      "Tute issued to " + student.name,
+      "Tute given to " + student.name,
     );
   }
   const changeHistory = [
@@ -242,11 +242,11 @@ export function App() {
       actor: o.actor,
       description:
         o.entity === "attendance"
-          ? "Attendance marked"
+          ? "Marked present"
           : o.entity === "fees"
-            ? "Payment recorded"
+            ? "Fee paid"
             : o.entity === "issues"
-              ? "Tute issued"
+              ? "Tute given"
               : "Workspace updated",
       key: o.key,
       entity: o.entity,
@@ -400,15 +400,6 @@ export function App() {
               data={data}
             />
           )}
-          <footer className="page-footer">
-            <span>
-              <GraduationCap size={15} />
-              Built for the way you teach.
-            </span>
-            <span>
-              Classroom <i /> Fictional sample data
-            </span>
-          </footer>
         </main>
       </div>
       <BottomNavigation tab={tab} navigate={navigate} />

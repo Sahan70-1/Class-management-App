@@ -6,3 +6,12 @@ export function download(blob: Blob, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Display copy only; does not alter counts or records. */
+export function plural(
+  count: number,
+  singular: string,
+  pluralForm = singular + "s",
+) {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}

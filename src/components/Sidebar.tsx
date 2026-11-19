@@ -39,7 +39,6 @@ export function Sidebar({
         </span>
         <span>
           classroom<span className="brand-dot">.</span>
-          <small>LESS ADMIN. MORE TEACHING.</small>
         </span>
       </a>
       <div className="workspace">
@@ -50,7 +49,6 @@ export function Sidebar({
           <strong>My tuition space</strong>
           <span>Mathematics academy</span>
         </div>
-        <Badge tone="mint">PRO</Badge>
       </div>
       <div className="nav-label">WORKSPACE</div>
       <nav className="main-nav">

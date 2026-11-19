@@ -409,7 +409,7 @@ test("removal and removed-directory controls are admin-only", async () => {
         issues: [],
       }),
     );
-    assert.equal(directory.includes("Show removed students"), role === "admin");
+    assert.equal(directory.includes("Show archived"), role === "admin");
     assert.equal(directory.includes(student.name), false);
   }
 });

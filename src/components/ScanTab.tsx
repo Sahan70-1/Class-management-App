@@ -206,11 +206,7 @@ export function ScanTab({
             )}
             <div className="scanner-tip">
               <ShieldCheck size={19} />
-              <p>
-                Scanning only opens the student’s details.
-                <br />
-                <strong>You choose what to record.</strong>
-              </p>
+              <p>Scan opens the student. You pick what to record.</p>
             </div>
           </>
         )}
@@ -240,7 +236,7 @@ export function ScanTab({
             },
             {
               icon: BookOpen,
-              title: "Issue a tute",
+              title: "Give a tute",
               text: "Keep track of each month’s lesson.",
             },
           ].map(({ icon, title, text }, i) => (

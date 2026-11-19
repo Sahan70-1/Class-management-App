@@ -62,7 +62,7 @@ export function StudentsTab({
             aria-label="Search students"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, student ID or phone…"
+            placeholder="Search by name, student ID or phone"
           />
         </div>
         <div className="filter-select">
@@ -72,7 +72,7 @@ export function StudentsTab({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="all">All classes</option>
+            <option value="all">All grades</option>
             {classes.map((c) => (
               <option value={c.id} key={c.id}>
                 {c.name}
@@ -92,7 +92,7 @@ export function StudentsTab({
             checked={showRemoved}
             onChange={(e) => setShowRemoved(e.target.checked)}
           />{" "}
-          Show removed students
+          Show archived
         </label>
       )}
       {removal.error && (
@@ -103,7 +103,7 @@ export function StudentsTab({
       <div className="panel student-directory">
         <div className="directory-header">
           <h3>
-            Student directory{" "}
+            Students{" "}
             <span className="count-pill">
               {
                 visible.filter((s) => filter === "all" || s.classId === filter)
@@ -111,13 +111,14 @@ export function StudentsTab({
               }
             </span>
           </h3>
-          <span>Stable IDs. Familiar faces.</span>
         </div>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>STUDENT</th>
+                <th>
+                  <span className="sr-only">Student</span>
+                </th>
                 <th>CLASS & ROLL</th>
                 <th>MONTHLY FEES</th>
                 <th>TUTE STATUS</th>
@@ -155,6 +156,11 @@ export function StudentsTab({
                               {s.id}
                               {s.removedAt ? " · Removed" : ""}
                             </small>
+                            {s.grade && (
+                              <span className="badge mint student-grade">
+                                Grade {s.grade}
+                              </span>
+                            )}
                           </span>
                         </button>
                       </td>
@@ -199,8 +205,8 @@ export function StudentsTab({
                           {issues.some(
                             (i) => i.studentId === s.id && i.tuteId === t?.id,
                           )
-                            ? "Issued"
-                            : "Not issued"}
+                            ? "Given"
+                            : "Not given"}
                         </Badge>
                       </td>
                       <td>

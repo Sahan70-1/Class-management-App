@@ -43,7 +43,12 @@ export function ActivityDialog({
                 <HistoryIcon size={17} />
               </span>
               <div>
-                <strong>{h.description}</strong>
+                <strong>
+                  {h.description
+                    .replace("Attendance marked", "Marked present")
+                    .replace("Monthly fee recorded", "Fee paid")
+                    .replace("Tute issued", "Tute given")}
+                </strong>
                 <p>{h.actor}</p>
                 <small>
                   {new Date(h.at).toLocaleString("en-GB", {
