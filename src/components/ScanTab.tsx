@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import {
+  addDays,
+  sessionsFor,
   shortDate,
   timeText,
   type Attendance,
@@ -81,6 +83,17 @@ export function ScanTab({
   students: Student[];
   activeStudents: Student[];
 }) {
+  const canScan =
+    role !== "viewer" && !!activeSession && !activeSession.cancelled;
+  let suggested: Session | undefined;
+  if (!canScan && role !== "viewer") {
+    // Include other sessions on the same day and one full weekly timetable.
+    for (let offset = 0; offset <= 7 && !suggested; offset++) {
+      suggested = sessionsFor(addDays(date, offset), schedules, overrides).find(
+        (session) => !session.cancelled,
+      );
+    }
+  }
   return (
     <div className="scan-layout">
       <div>
@@ -103,6 +116,11 @@ export function ScanTab({
                 </option>
               ))}
             {!activeSession && <option value="">No class scheduled</option>}
+            {activeSession?.cancelled && (
+              <option value={activeSession.id} disabled>
+                Selected class cancelled
+              </option>
+            )}
           </select>
           <input
             aria-label="Class date"
@@ -116,6 +134,35 @@ export function ScanTab({
             }}
           />
         </div>
+        {!canScan && (
+          <div className="panel scan-guidance">
+            <p>
+              {role === "viewer"
+                ? "Scanning requires tutor or attendance staff access."
+                : activeSession?.cancelled
+                  ? "This session was cancelled. Choose another class or date to scan."
+                  : "No class is scheduled for this date. Choose a class date to scan."}
+            </p>
+            {suggested && (
+              <button
+                className="button white"
+                onClick={() => {
+                  if (!suggested) return;
+                  setDate(suggested.date);
+                  setSelected(suggested.id);
+                  setStudent(null);
+                  setQuery("");
+                }}
+              >
+                Select{" "}
+                {classes.find((c) => c.id === suggested.classId)?.name ||
+                  "class"}
+                {" · "}
+                {shortDate(suggested.date)} · {timeText(suggested.start)}
+              </button>
+            )}
+          </div>
+        )}
         {student?.removedAt ? (
           <div role="alert" className="callout warning">
             This student has been removed.
@@ -141,7 +188,8 @@ export function ScanTab({
         ) : (
           <>
             <Scanner
-              disabled={!activeSession || role === "viewer"}
+              key={canScan ? activeSession?.id : "unavailable"}
+              disabled={!canScan}
               onResult={scanResult}
               notify={setToast}
             />

@@ -6185,3 +6185,11 @@ input[type="radio"] {
 .report-stats .stat-foot {
   color: var(--ink);
 }
+
+.scan-guidance {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
