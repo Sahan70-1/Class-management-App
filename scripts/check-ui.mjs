@@ -21,6 +21,14 @@ try {
     await page.getByRole("heading", { name: "Today." }).waitFor();
     const close = () =>
       page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    async function openClasses() {
+      if (width <= 760)
+        await page.getByRole("button", { name: "Open menu" }).click();
+      await page
+        .getByRole("button", { name: "Your classes", exact: true })
+        .click();
+    }
+    await openClasses();
     await page
       .getByRole("button", { name: "Manage classes", exact: true })
       .click();
@@ -28,14 +36,13 @@ try {
       .getByRole("heading", { name: "Manage classes", exact: true })
       .waitFor();
     await close();
+    await openClasses();
     await page
       .getByRole("button", { name: "Find free slot", exact: true })
       .click();
     await page.getByRole("dialog").waitFor();
     await close();
-    const navigation = page.locator(
-      width < 600 ? ".bottom-nav button" : ".main-nav button",
-    );
+    const navigation = page.locator(".bottom-nav button");
     await navigation.nth(1).click();
     await page.getByRole("heading", { name: "Scan a student." }).waitFor();
     assert.equal(
@@ -63,6 +70,13 @@ try {
     await close();
     await navigation.nth(3).click();
     await page.getByRole("heading", { name: "Reports." }).waitFor();
+    for (const name of ["Attendance", "Monthly fees", "Tute distribution"]) {
+      await page.getByRole("button", { name, exact: true }).click();
+      const fits = await page
+        .locator(".report-panel .table-scroll")
+        .evaluate((el) => el.scrollWidth <= el.clientWidth);
+      assert.ok(fits, name + " report should fit the viewport");
+    }
     await page.locator(".sync-button").click();
     await page.getByRole("button", { name: "Sync now", exact: true }).waitFor();
     await close();

@@ -1,10 +1,4 @@
-import {
-  CalendarDays,
-  ChevronRight,
-  Download,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
+import { Download, Plus, ShieldCheck } from "lucide-react";
 import React from "react";
 import { dateObject, type Role, type Student } from "../model";
 import { type Tab } from "../navigation";
@@ -13,8 +7,6 @@ export function PageHeading({
   tab,
   student,
   role,
-  setCalendar,
-  calendar,
   date,
   setStudent,
   setModal,
@@ -23,8 +15,6 @@ export function PageHeading({
   tab: Tab;
   student: Student | null;
   role: Role;
-  setCalendar: React.Dispatch<React.SetStateAction<boolean>>;
-  calendar: boolean;
   date: string;
   setStudent: React.Dispatch<React.SetStateAction<Student | null>>;
   setModal: React.Dispatch<React.SetStateAction<string | null>>;
@@ -62,23 +52,7 @@ export function PageHeading({
             <ShieldCheck size={13} /> Read only
           </Badge>
         )}
-        {tab === "Today" ? (
-          <button
-            className="button white date-button"
-            aria-label="Toggle calendar"
-            onClick={() => setCalendar(!calendar)}
-          >
-            <CalendarDays size={17} />
-            {dateObject(date).toLocaleDateString("en-GB", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              timeZone: "Asia/Colombo",
-            })}
-            <ChevronRight size={15} />
-          </button>
-        ) : tab === "Students" && role !== "viewer" ? (
+        {tab === "Students" && role !== "viewer" ? (
           <button
             className="button primary"
             onClick={() => {

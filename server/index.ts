@@ -1,5 +1,5 @@
 import {seedRecords} from '../src/seed';
-import {canWrite,validateClass,validateStudentRemoval,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Schedule,type Override} from '../src/model';
+import {canWrite,validateProfile,validateClass,validateStudentRemoval,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Tute,type Issue,type Schedule,type Override} from '../src/model';
 interface Env { DB:D1Database; ASSETS:Fetcher; LOCAL_DEMO?:string; INITIAL_ADMIN_EMAIL?:string }
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const validDate=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!isNaN(Date.parse(v));
@@ -9,15 +9,16 @@ function validate(op:Operation,all:StoredRecord[],role:Role,actor:string):string
  if(!op||typeof op.id!=='string'||op.id.length>100||typeof op.key!=='string'||op.key.length>250||!op.value||op.key!==op.value.id||!Number.isInteger(op.baseRevision)||JSON.stringify(op.value).length>650000)return 'Invalid operation.';
  if(!canWrite(role,op.entity,all.some(r=>r.entity===op.entity&&r.key===op.key),op.value))return 'Your role does not allow this operation.';
  const v:any=op.value;
+ if(op.entity==='profiles')return validateProfile(v,actor);
  if(op.entity==='students'){const removalError=validateStudentRemoval(v,values(all,'students').find(s=>s.id===v.id),role,actor);if(removalError)return removalError;if(typeof v.name!=='string'||!v.name.trim()||v.name.length>100||!/^S-[A-Za-z0-9-]+$/.test(v.id)||!values(all,'classes').some(c=>c.id===v.classId))return 'Student name, stable ID and class are required.';if(v.photo&&!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v.photo))return 'Photo must be a JPEG, PNG or WebP image.';}
  if(op.entity==='classes'){const error=validateClass(v);if(error)return error;}
  if(['attendance','fees','issues'].includes(op.entity)){
  const student=values(all,'students').find(s=>s.id===v.studentId);if(!student)return 'Student does not exist.';if(student.removedAt&&!all.some(r=>r.entity===op.entity&&r.key===op.key))return 'This student has been removed. Restore the student before recording new attendance, fees or tute issues.';
  if(op.entity==='attendance'){const session=sessionsFor(v.date,values(all,'schedules'),values(all,'overrides')).find(s=>s.id===v.sessionId);if(!validDate(v.date)||!session||session.cancelled||session.classId!==student.classId||v.classId!==session.classId||v.id!==student.id+'@'+session.id)return 'Attendance needs an active session in the student’s class.';}
  if(op.entity==='fees'){const c=values(all,'classes').find(c=>c.id===v.classId);if(!c||student.classId!==c.id||!/^\d{4}-(0[1-9]|1[0-2])$/.test(v.month)||v.amount!==c.fee||v.id!==student.id+'@'+c.id+'@'+v.month||!['Cash','Bank transfer'].includes(v.method))return 'Payment must match the selected class monthly fee.';}
- if(op.entity==='issues'){const t=values(all,'tutes').find(t=>t.id===v.tuteId);if(!t||t.classId!==student.classId||v.id!==student.id+'@'+t.id)return 'Tute must belong to the student’s class.';}
+ if(op.entity==='issues'){const t=values(all,'tutes').find(t=>t.id===v.tuteId);if(t?.deleted)return 'This tute has been deleted.';if(!t||t.classId!==student.classId||v.id!==student.id+'@'+t.id)return 'Tute must belong to the student’s class.';}
  }
- if(op.entity==='tutes'&&(!v.title?.trim()||v.title.length>150||!values(all,'classes').some(c=>c.id===v.classId)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(v.month)||v.id!==v.classId+'@'+v.month))return 'Tute needs a class, month and lesson title.';
+ if(op.entity==='tutes'&&((v.deleted!==undefined&&typeof v.deleted!=='boolean')||typeof v.title!=='string'||!v.title.trim()||v.title.length>150||!values(all,'classes').some(c=>c.id===v.classId)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(v.month)||v.id!==v.classId+'@'+v.month))return 'Tute needs a class, month and lesson title.';
  if(op.entity==='schedules'){
  const s=v as Schedule;if(!values(all,'classes').some(c=>c.id===s.classId)||!Array.isArray(s.versions)||!s.versions.length||s.versions.length>200||s.versions.some(v=>!validDate(v.from)||v.until&&!validDate(v.until)||!validTime(v.start)||!validTime(v.end)||v.start>=v.end||!Number.isInteger(v.weekday)||v.weekday<0||v.weekday>6)||s.extraDate&&!validDate(s.extraDate))return 'Invalid class schedule.';
  for(let i=1;i<s.versions.length;i++)if(!s.versions[i-1].until||s.versions[i-1].until!>=s.versions[i].from)return 'Schedule versions must not overlap.';
@@ -61,9 +62,13 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  const at=new Date().toISOString();let description=op.entity==='schedules'?'Weekly timetable changed':op.entity==='overrides'?((op.value as Override).cancelled?'Class session cancelled':'Class session time changed'):op.entity==='attendance'?'Attendance marked':op.entity==='fees'?'Monthly fee recorded':op.entity==='issues'?'Tute issued':op.entity==='students'?'Student details saved':op.entity==='classes'?'Class details saved':'Lesson title saved';
  if(op.entity==='schedules'){const s=op.value as Schedule;const v=s.versions.at(-1)!;const previous=(current?.value as Schedule|undefined)?.versions.at(-1);const name=values(all,'classes').find(c=>c.id===s.classId)?.name||s.classId;description=name+': '+(v.cancelled?'cancelled':v.start+'–'+v.end)+(s.extraDate?' on '+s.extraDate:' from '+v.from)+(previous?' (previously '+previous.start+'–'+previous.end+')':' · new '+(s.extraDate?'extra':'weekly')+' class');}
  if(op.entity==='overrides'){const o=op.value as Override;const prior=sessionsFor(o.date,values(all,'schedules'),values(all,'overrides')).find(s=>s.scheduleId===o.scheduleId);const name=values(all,'classes').find(c=>c.id===prior?.classId)?.name||o.scheduleId;description=name+' · '+o.date+' only: '+(o.cancelled?'cancelled':o.start+'–'+o.end)+(prior?' (previously '+prior.start+'–'+prior.end+')':'');}
+ if(op.entity==='profiles')description='Profile picture updated';
+ if(op.entity==='tutes' && (op.value as Tute).deleted)description='Tute deleted';
+ const issueTuteId=op.entity==='issues'?(op.value as Issue).tuteId:null;
  const payload=JSON.stringify(op.value);
  const result=await env.DB.batch([
- env.DB.prepare('INSERT OR IGNORE INTO events(operation_id,entity,record_key,at,actor,description,value) SELECT ?,?,?,?,?,?,? WHERE COALESCE((SELECT revision FROM records WHERE entity=? AND record_key=?),0)=? AND (?=0 OR (SELECT revision FROM schedule_lock WHERE id=1)=?)').bind(op.id,op.entity,op.key,at,email,description,payload,op.entity,op.key,op.baseRevision,scheduleOperation?1:0,epoch),
+ env.DB.prepare(`INSERT OR IGNORE INTO events(operation_id,entity,record_key,at,actor,description,value) SELECT ?,?,?,?,?,?,? WHERE COALESCE((SELECT revision FROM records WHERE entity=? AND record_key=?),0)=? AND (?=0 OR (SELECT revision FROM schedule_lock WHERE id=1)=?)
+ AND (? IS NULL OR EXISTS(SELECT 1 FROM records WHERE entity='tutes' AND record_key=? AND NOT COALESCE(json_extract(value,'$.deleted'),0)))`).bind(op.id,op.entity,op.key,at,email,description,payload,op.entity,op.key,op.baseRevision,scheduleOperation?1:0,epoch,issueTuteId,issueTuteId),
  env.DB.prepare('INSERT INTO records(entity,record_key,value,revision) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM events WHERE operation_id=?) ON CONFLICT(entity,record_key) DO UPDATE SET value=excluded.value,revision=excluded.revision').bind(op.entity,op.key,payload,op.baseRevision+1,op.id),
  env.DB.prepare('UPDATE schedule_lock SET revision=revision+1 WHERE id=1 AND ?=1 AND EXISTS(SELECT 1 FROM events WHERE operation_id=?)').bind(scheduleOperation?1:0,op.id)
  ]);
@@ -84,6 +89,6 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200')
  ]);
  const nextSeq=Number((snapshot[0].results[0] as {seq:number}).seq);
- return json({accepted,conflicts,records:snapshot[1].results.map((r:any)=>({...r,value:JSON.parse(r.value)})),deleted:snapshot[2].results,full:lastSeq===0||lastSeq>nextSeq,lastSeq:nextSeq,history:snapshot[3].results,role,email});
+ return json({accepted,conflicts,records:snapshot[1].results.map((r:any)=>({...r,value:JSON.parse(r.value)})).filter(r=>body.includeProfiles===true||r.entity!=='profiles'),deleted:snapshot[2].results,full:lastSeq===0||lastSeq>nextSeq,lastSeq:nextSeq,history:snapshot[3].results,role,email});
  }catch(error){console.error('API error',error instanceof Error?error.message:'unknown');return json({error:'The server could not complete this request. Device changes remain queued.'},500);}
 }};

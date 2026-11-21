@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'staff' | 'viewer';
-export type Entity = 'students' | 'classes' | 'schedules' | 'overrides' | 'attendance' | 'fees' | 'tutes' | 'issues';
+export type Entity = 'students' | 'classes' | 'schedules' | 'overrides' | 'attendance' | 'fees' | 'tutes' | 'issues' | 'profiles';
 export interface Student { id:string; name:string; phone:string; parentPhone:string; whatsapp:string; address:string; grade:string; classId:string; roll:string; photo?:string; color:string; removedAt?:string; removedBy?:string }
 export interface ClassGroup { id:string; grade?:string; name:string; subject:string; room:string; fee:number; color:string }
 export interface ScheduleVersion { from:string; until?:string; weekday:number; start:string; end:string; cancelled?:boolean }
@@ -7,9 +7,10 @@ export interface Schedule { id:string; classId:string; versions:ScheduleVersion[
 export interface Override { id:string; scheduleId:string; date:string; start:string; end:string; cancelled:boolean }
 export interface Attendance { id:string; studentId:string; sessionId:string; date:string; classId:string; at:string }
 export interface Fee { id:string; studentId:string; classId:string; month:string; amount:number; at:string; method:string }
-export interface Tute { id:string; classId:string; month:string; title:string }
+export interface Tute { id:string; classId:string; month:string; title:string; deleted?:boolean }
 export interface Issue { id:string; studentId:string; tuteId:string; at:string }
-export interface EntityMap { students:Student; classes:ClassGroup; schedules:Schedule; overrides:Override; attendance:Attendance; fees:Fee; tutes:Tute; issues:Issue }
+export interface MemberProfile { id:string; photo:string }
+export interface EntityMap { profiles:MemberProfile; students:Student; classes:ClassGroup; schedules:Schedule; overrides:Override; attendance:Attendance; fees:Fee; tutes:Tute; issues:Issue }
 export interface StoredRecord { entity:Entity; key:string; value:EntityMap[Entity]; revision:number }
 export interface Operation extends StoredRecord { id:string; at:string; actor:string; baseRevision:number }
 export interface History { id:string; entity:Entity; key:string; at:string; actor:string; description:string }
@@ -37,6 +38,7 @@ export function qrStudentId(raw:string){if(/^S-[A-Za-z0-9-]+$/.test(raw))return 
 // Legacy class records predate the explicit grade field.
 export const classGrade=(c:ClassGroup)=>c.grade??(/^Grade (\d+)$/.exec(c.name)?.[1]||'');
 export function canWrite(role:Role,entity:Entity,existing=false,value?:EntityMap[Entity]){
+ if(entity==='profiles')return true; // Ownership is checked against the authenticated email.
  const entities:Entity[]=['students','classes','schedules','overrides','attendance','fees','tutes','issues'];
  return entities.includes(entity)&&(role==='admin'||(role==='staff'&&!(entity==='students'&&(existing||(value as Student|undefined)?.removedAt!==undefined||(value as Student|undefined)?.removedBy!==undefined))));
 }
@@ -60,5 +62,15 @@ export function validateStudentRemoval(student:Student,previous:Student|undefine
  if(typeof student.removedAt!=='string'||!Number.isFinite(Date.parse(student.removedAt))||new Date(student.removedAt).toISOString()!==student.removedAt||typeof student.removedBy!=='string'||!student.removedBy.trim())return 'Removal requires an ISO timestamp and the removing admin.';
  if(!previous)return 'Register the student before removing them.';
  if(changed&&student.removedBy!==actor)return 'Removal must identify the signed-in admin.';
+ return null;
+}
+
+export function validateProfile(profile:MemberProfile, email:string) {
+ if (profile.id !== email || !email.includes('@')) return 'You can only change your own profile picture.';
+ if (Object.keys(profile).some(key => key !== 'id' && key !== 'photo') ||
+     typeof profile.photo !== 'string' || profile.photo.length > 48000 ||
+     (profile.photo !== '' && !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(profile.photo))) {
+   return 'Choose a small JPEG profile picture.';
+ }
  return null;
 }

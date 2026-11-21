@@ -24,7 +24,13 @@ test('offline action is durable, independent, retained on failure, and acknowled
  await store.mutate('schedules',{id:'staff-schedule',classId:'staff-class',versions:[{from:day,weekday:1,start:'08:00',end:'10:00'}]},'staff');
  await store.mutate('overrides',{id:'staff-schedule@'+day,scheduleId:'staff-schedule',date:day,start:'09:00',end:'11:00',cancelled:false},'staff');
  await store.mutate('tutes',{id:'staff-class@'+day.slice(0,7),classId:'staff-class',month:day.slice(0,7),title:'New lesson'},'staff');
- assert.equal(await db.count('outbox'),5);
+ const avatar={id:'staff@example.com',photo:'data:image/jpeg;base64,/9j/2Q=='};
+ await store.mutate('profiles',avatar,'staff');
+ await assert.rejects(()=>store.mutate('profiles',{...avatar,id:'other@example.com'},'staff'),/own profile/);
+ const lesson={id:'staff-class@'+day.slice(0,7),classId:'staff-class',month:day.slice(0,7),title:'New lesson',deleted:true};
+ await store.mutate('tutes',lesson,'staff');
+ await assert.rejects(()=>store.mutate('issues',{id:'S-STAFF@'+lesson.id,studentId:'S-STAFF',tuteId:lesson.id,at:day},'staff'),/deleted/);
+ assert.equal(await db.count('outbox'),7);
  assert.equal((await db.get('records','classes:staff-class')).value.grade,'8');
  const pending=await db.getAll('outbox');assert.equal(pending.every(o=>o.actor==='staff@example.com'),true);
  await assert.rejects(()=>store.mutate('classes',{id:'bad-class',grade:'8',name:'Bad fee',fee:-1,subject:'Maths',room:'Main',color:'teal'},'staff'),/fee/);

@@ -1,5 +1,7 @@
 import { activeStudentsOnly } from "./model";
 import { reportCsv } from "./reports";
+import { ClassSessions } from "./components/ClassSessions";
+import { MiniCalendar } from "./components/MiniCalendar";
 import { SessionOverview } from "./components/SessionOverview";
 import { Modal } from "./components/Modal";
 import { shortDate } from "./model";
@@ -48,7 +50,6 @@ export function App() {
   const today = todayISO();
   const [tab, setTab] = useState<Tab>("Today"),
     [date, setDate] = useState(today),
-    [calendar, setCalendar] = useState(false),
     [selected, setSelected] = useState<string>(""),
     [student, setStudent] = useState<Student | null>(null),
     [modal, setModal] = useState<string | null>(null),
@@ -67,8 +68,11 @@ export function App() {
     overrides = values(data.records, "overrides"),
     attendance = values(data.records, "attendance"),
     fees = values(data.records, "fees"),
-    tutes = values(data.records, "tutes"),
+    allTutes = values(data.records, "tutes"),
+    tutes = allTutes.filter((t) => !t.deleted),
     issues = values(data.records, "issues");
+  const profiles = values(data.records, "profiles");
+  const myPhoto = profiles.find((p) => p.id === data.email)?.photo;
   const enrolled = activeStudentsOnly(students);
   useEffect(() => {
     if (student) {
@@ -97,11 +101,14 @@ export function App() {
   const currentTute = tutes.find(
     (t) => t.classId === activeSession?.classId && t.month === month,
   );
+  const todaySessions =
+    date === today ? sessions : sessionsFor(today, schedules, overrides);
+  const nextClass = todaySessions.find((s) => !s.cancelled) || null;
   const present = attendance.filter(
-      (a) => a.date === date && enrolled.some((s) => s.id === a.studentId),
+      (a) => a.date === today && enrolled.some((s) => s.id === a.studentId),
     ).length,
     collected = fees
-      .filter((f) => f.at.slice(0, 10) === date)
+      .filter((f) => f.at.slice(0, 10) === today)
       .reduce((n, f) => n + f.amount, 0);
   useEffect(() => {
     void initialize();
@@ -130,12 +137,14 @@ export function App() {
     }
   }
   function navigate(t: Tab) {
+    if (t === "Today") setDate(today);
     setTab(t);
     setStudent(null);
     setQuery("");
     setMobileMenu(false);
   }
   function openClass(session: Session) {
+    setDate(session.date);
     setSelected(session.id);
     setModal("overview");
     setStudent(null);
@@ -235,27 +244,6 @@ export function App() {
       ["schedules", "overrides"].includes(h.entity),
     ),
   ];
-  const recent = [
-    ...data.pending.map((o) => ({
-      id: o.id,
-      at: o.at,
-      actor: o.actor,
-      description:
-        o.entity === "attendance"
-          ? "Marked present"
-          : o.entity === "fees"
-            ? "Fee paid"
-            : o.entity === "issues"
-              ? "Tute given"
-              : "Workspace updated",
-      key: o.key,
-      entity: o.entity,
-      pending: true,
-    })),
-    ...data.history.map((h) => ({ ...h, pending: false })),
-  ]
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, 4);
   const scheduleEditor = (session: Session) => {
     setEditing(session);
     setModal("schedule");
@@ -265,11 +253,12 @@ export function App() {
     <div className="app-shell">
       <Sidebar
         mobileMenu={mobileMenu}
-        navigate={navigate}
-        tab={tab}
-        students={enrolled}
-        setModal={setModal}
-        role={role}
+        goHome={() => navigate("Today")}
+        open={(section) => {
+          setMobileMenu(false);
+          if (section === "classes") setDate(today);
+          setModal(section);
+        }}
       />
       {mobileMenu && (
         <button
@@ -280,6 +269,7 @@ export function App() {
       )}
       <div className="main-shell">
         <Topbar
+          photo={myPhoto}
           setMobileMenu={setMobileMenu}
           tab={tab}
           data={data}
@@ -290,9 +280,7 @@ export function App() {
             tab={tab}
             student={student}
             role={role}
-            setCalendar={setCalendar}
-            calendar={calendar}
-            date={date}
+            date={today}
             setStudent={setStudent}
             setModal={setModal}
             exportReport={exportReport}
@@ -310,28 +298,16 @@ export function App() {
           )}
           {tab === "Today" && (
             <TodayTab
-              sessions={sessions}
-              date={date}
-              today={today}
-              activeSession={activeSession}
+              sessions={todaySessions}
+              activeSession={nextClass}
+              classes={classes}
               openClass={openClass}
               setModal={setModal}
-              month={month}
               present={present}
               collected={collected}
               students={enrolled}
-              calendar={calendar}
-              setCalendar={setCalendar}
-              setDate={setDate}
-              schedules={schedules}
-              overrides={overrides}
-              classes={classes}
-              attendance={attendance}
-              role={role}
-              scheduleEditor={scheduleEditor}
-              setEditing={setEditing}
-              recent={recent}
               tutes={tutes}
+              month={monthOf(today)}
               issues={issues}
             />
           )}
@@ -393,7 +369,7 @@ export function App() {
               students={students}
               fees={fees}
               attendance={attendance}
-              tutes={tutes}
+              tutes={allTutes}
               issues={issues}
               reportType={reportType}
               setReportType={setReportType}
@@ -416,11 +392,43 @@ export function App() {
         </div>
       )}
       {modal === "sync" && <SyncDialog setModal={setModal} data={data} />}
+      {modal === "classes" && (
+        <ClassSessions
+          sessions={sessions}
+          date={date}
+          classes={classes}
+          students={enrolled}
+          attendance={attendance}
+          role={role}
+          openClass={openClass}
+          scheduleEditor={scheduleEditor}
+          setModal={setModal}
+          setEditing={setEditing}
+        />
+      )}
+      {modal === "calendar" && (
+        <Modal title="Calendar" onClose={() => setModal(null)}>
+          <MiniCalendar
+            date={date}
+            onDate={(day) => {
+              setDate(day);
+              setModal("classes");
+            }}
+            schedules={schedules}
+            overrides={overrides}
+          />
+        </Modal>
+      )}
       {modal === "activity" && (
-        <ActivityDialog setModal={setModal} data={data} recent={recent} />
+        <ActivityDialog profiles={profiles} setModal={setModal} data={data} />
       )}
       {modal === "settings" && (
         <SettingsModal
+          photo={myPhoto}
+          savePhoto={async (photo) => {
+            await mutate("profiles", { id: data.email, photo }, role);
+            setToast("Profile picture updated");
+          }}
           actualRole={data.role}
           role={previewRole}
           email={data.email}
@@ -504,7 +512,6 @@ export function App() {
               "Extra class added",
             );
             setDate(d);
-            setCalendar(d !== today);
             setModal(null);
           }}
         />
@@ -571,14 +578,15 @@ export function App() {
       {modal === "tutes" && (
         <TuteModal
           classes={classes}
-          month={month}
-          tutes={tutes}
+          month={monthOf(today)}
+          tutes={allTutes}
           issues={issues}
           students={enrolled}
           role={role}
           onClose={() => setModal(null)}
           onSave={async (value) => {
-            await save("tutes", value, "Lesson title saved");
+            await mutate("tutes", value, role);
+            setToast(value.deleted ? "Tute deleted" : "Tute saved");
           }}
         />
       )}
@@ -593,7 +601,7 @@ export function App() {
       attendance,
       fees,
       issues,
-      tutes,
+      allTutes,
     );
     download(
       new Blob([csv], { type: "text/csv;charset=utf-8" }),

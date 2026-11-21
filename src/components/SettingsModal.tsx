@@ -1,9 +1,13 @@
+import { MemberAvatar } from "./MemberAvatar";
+import { ProfilePhotoField } from "./ProfilePhotoField";
 import { Download, LogOut, Plus, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type Role } from "../model";
 import { Badge } from "./Badge";
 import { Modal } from "./Modal";
 export function SettingsModal({
+  photo,
+  savePhoto,
   actualRole,
   role,
   email,
@@ -11,6 +15,8 @@ export function SettingsModal({
   onClose,
   notify,
 }: {
+  photo?: string;
+  savePhoto: (photo: string) => Promise<void>;
   actualRole: Role;
   role: Role;
   email: string;
@@ -41,7 +47,7 @@ export function SettingsModal({
       onClose={onClose}
     >
       <div className="settings-account">
-        <span className="tutor-avatar">T</span>
+        <MemberAvatar email={email} photo={photo} />
         <div>
           <strong>{email}</strong>
           <p>
@@ -55,6 +61,11 @@ export function SettingsModal({
         <ShieldCheck size={20} />
       </div>
       <div className="form">
+        <ProfilePhotoField
+          photo={photo}
+          enabled={email.includes("@")}
+          save={savePhoto}
+        />
         {actualRole === "admin" && (
           <>
             <label>

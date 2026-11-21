@@ -115,7 +115,7 @@ try {
   await Promise.all([a, b].map(pull));
   const id = "S-00002";
   let initial = await read(a, "records", "students:" + id);
-  await a.locator(".main-nav button").nth(2).click();
+  await a.locator(".bottom-nav button").nth(2).click();
   if (initial.value.removedAt) {
     await a.getByLabel("Show archived").check();
     await a
@@ -192,7 +192,7 @@ try {
   await a.reload();
   await a.getByRole("heading", { name: "Today." }).waitFor();
   assert.ok((await read(a, "records", "students:" + id)).value.removedAt);
-  await a.locator(".main-nav button").nth(1).click();
+  await a.locator(".bottom-nav button").nth(1).click();
   const png = await QRCode.toBuffer(
     JSON.stringify({ app: "classroom", v: 1, id }),
   );
@@ -245,7 +245,7 @@ try {
     await a.getByRole("button", { name: "Close dialog", exact: true }).click();
   };
   await previewRole("staff");
-  await a.locator(".main-nav button").nth(2).click();
+  await a.locator(".bottom-nav button").nth(2).click();
   await a.getByRole("button", { name: "New student", exact: true }).waitFor();
   assert.equal(await a.getByLabel("Show archived").count(), 0);
   await a
@@ -263,7 +263,8 @@ try {
     0,
   );
   await a.getByRole("button", { name: "Close dialog", exact: true }).click();
-  await a.locator(".main-nav button").nth(0).click();
+  await a.locator(".bottom-nav button").nth(0).click();
+  await a.getByRole("button", {name: "Your classes", exact:true}).click();
   await a.getByRole("button", { name: "Manage classes", exact: true }).click();
   await a.getByRole("button", { name: "Add class", exact: true }).click();
   await a.getByRole("dialog").getByRole("combobox").waitFor();
@@ -275,7 +276,7 @@ try {
   assert.equal(await a.getByLabel("Lesson title").isEnabled(), true);
   await a.getByRole("button", { name: "Close dialog", exact: true }).click();
   await previewRole("viewer");
-  await a.locator(".main-nav button").nth(2).click();
+  await a.locator(".bottom-nav button").nth(2).click();
   assert.equal(
     await a.getByRole("button", { name: "New student", exact: true }).count(),
     0,

@@ -1,6 +1,5 @@
 import {
   ChevronRight,
-  Layers,
   ScanLine,
   Search,
   ShieldCheck,
@@ -80,10 +79,7 @@ export function StudentsTab({
             ))}
           </select>
         </div>
-        <button className="button white" onClick={() => setModal("tutes")}>
-          <Layers size={17} />
-          Manage tutes
-        </button>
+
       </div>
       {role === "admin" && (
         <label className="form-hint">

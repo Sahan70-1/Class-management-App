@@ -1,6 +1,6 @@
 import { Check, Info } from "lucide-react";
 import { useEffect, useState } from "react";
-import { type EntityMap, type Role, type Student } from "../model";
+import { monthText, type EntityMap, type Role, type Student } from "../model";
 import { Avatar } from "./Avatar";
 import { Badge } from "./Badge";
 import { Modal } from "./Modal";
@@ -26,14 +26,35 @@ export function TuteModal({
   const [classId, setClassId] = useState(classes[0]?.id || ""),
     [period, setPeriod] = useState(month),
     [title, setTitle] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [confirmDelete, setConfirmDelete] = useState(false),
+    [error, setError] = useState("");
+  const catalog = tutes
+    .filter((t) => !t.deleted)
+    .sort(
+      (a, b) =>
+        b.month.localeCompare(a.month) || a.title.localeCompare(b.title),
+    );
+  async function persist(tute: EntityMap["tutes"]) {
+    setBusy(true);
+    setError("");
+    try {
+      await onSave(tute);
+      setConfirmDelete(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save tute.");
+    } finally {
+      setBusy(false);
+    }
+  }
   const current = tutes.find(
     (t) => t.classId === classId && t.month === period,
   );
-  useEffect(
-    () => setTitle(current?.title || ""),
-    [classId, period, current?.title],
-  );
+  useEffect(() => {
+    setTitle(current?.title || "");
+    setConfirmDelete(false);
+    setError("");
+  }, [classId, period, current?.title, current?.deleted]);
   const roster = students.filter((s) => s.classId === classId);
   return (
     <Modal
@@ -45,19 +66,43 @@ export function TuteModal({
         className="form"
         onSubmit={async (e) => {
           e.preventDefault();
-          setBusy(true);
-          try {
-            await onSave({
-              id: classId + "@" + period,
-              classId,
-              month: period,
-              title: title.trim(),
-            });
-          } finally {
-            setBusy(false);
-          }
+          if (role === "viewer" || busy || confirmDelete) return;
+          await persist({
+            id: classId + "@" + period,
+            classId,
+            month: period,
+            title: title.trim(),
+          });
         }}
       >
+        <section aria-label="Saved tutes" className="tute-catalog">
+          <h3>Saved tutes</h3>
+          {catalog.length ? (
+            <ul>
+              {catalog.map((t) => (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    aria-pressed={current?.id === t.id}
+                    disabled={busy}
+                    onClick={() => {
+                      setClassId(t.classId);
+                      setPeriod(t.month);
+                    }}
+                  >
+                    <strong>{t.title}</strong>
+                    <small>
+                      {classes.find((c) => c.id === t.classId)?.name} ·{" "}
+                      {monthText(t.month)}
+                    </small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No saved tutes yet.</p>
+          )}
+        </section>
         <div className="form-grid">
           <label>
             Class
@@ -96,11 +141,63 @@ export function TuteModal({
           />
         </label>
         {role !== "viewer" && (
-          <button className="button primary" disabled={busy || !title.trim()}>
+          <button
+            className="button primary"
+            disabled={busy || !title.trim() || confirmDelete || !classId}
+          >
             <Check size={17} />
-            {busy ? "Saving…" : "Save lesson title"}
+            {busy
+              ? "Saving…"
+              : current?.deleted
+                ? "Restore tute"
+                : "Save lesson title"}
           </button>
         )}
+        {error && <p role="alert">{error}</p>}
+        {current?.deleted && (
+          <p className="form-hint">
+            This tute was deleted. Restoring it keeps its issue history.
+          </p>
+        )}
+        {role !== "viewer" &&
+          current &&
+          !current.deleted &&
+          (confirmDelete ? (
+            <div className="callout warning tute-confirm">
+              <strong>Delete “{current.title}”?</strong>
+              <p>
+                It will be removed from check-in. Past issue records stay in
+                reports.
+              </p>
+              <div>
+                <button
+                  type="button"
+                  className="button white"
+                  disabled={busy}
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Keep tute
+                </button>
+                <button
+                  type="button"
+                  className="button danger"
+                  disabled={busy}
+                  onClick={() => persist({ ...current, deleted: true })}
+                >
+                  Confirm delete
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="button white"
+              disabled={busy}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete tute
+            </button>
+          ))}
         <div className="callout">
           <Info size={17} />
           <span>

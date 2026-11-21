@@ -1,106 +1,43 @@
-import { plural } from "../utils";
 import {
   ArrowRight,
-  ArrowUpRight,
-  BookOpen,
-  CalendarClock,
-  CalendarDays,
-  Check,
   CheckCheck,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
   Coins,
-  Ellipsis,
   GraduationCap,
   MapPin,
-  Plus,
-  ScanLine,
-  Settings,
-  Sun,
   Users,
 } from "lucide-react";
-import React from "react";
 import {
-  addDays,
-  dateObject,
-  monthText,
-  sessionsFor,
-  shortDate,
   timeText,
-  weekday,
-  type Attendance,
   type ClassGroup,
-  type Entity,
-  type Issue,
-  type Override,
-  type Role,
-  type Schedule,
   type Session,
   type Student,
   type Tute,
+  type Issue,
 } from "../model";
-import { Avatar } from "./Avatar";
-import { Badge } from "./Badge";
-import { ClassIllustration } from "./ClassIllustration";
-import { Icon } from "./Icon";
-import { MiniCalendar } from "./MiniCalendar";
 import { Stat } from "./Stat";
 export function TodayTab({
   sessions,
-  date,
-  today,
   activeSession,
+  classes,
   openClass,
   setModal,
-  month,
   present,
   collected,
   students,
-  calendar,
-  setCalendar,
-  setDate,
-  schedules,
-  overrides,
-  classes,
-  attendance,
-  role,
-  scheduleEditor,
-  setEditing,
-  recent,
   tutes,
+  month,
   issues,
 }: {
   sessions: Session[];
-  date: string;
-  today: string;
   activeSession: Session | null;
+  classes: ClassGroup[];
   openClass: (session: Session) => void;
   setModal: React.Dispatch<React.SetStateAction<string | null>>;
-  month: string;
   present: number;
   collected: number;
   students: Student[];
-  calendar: boolean;
-  setCalendar: React.Dispatch<React.SetStateAction<boolean>>;
-  setDate: React.Dispatch<React.SetStateAction<string>>;
-  schedules: Schedule[];
-  overrides: Override[];
-  classes: ClassGroup[];
-  attendance: Attendance[];
-  role: Role;
-  scheduleEditor: (session: Session) => void;
-  setEditing: React.Dispatch<React.SetStateAction<Session | null>>;
-  recent: {
-    id: string;
-    at: string;
-    actor: string;
-    description: string;
-    key: string;
-    entity: Entity;
-    pending: boolean;
-  }[];
   tutes: Tute[];
+  month: string;
   issues: Issue[];
 }) {
   return (
@@ -211,290 +148,6 @@ export function TodayTab({
             </div>
           );
         })}
-      </div>
-      <div className="today-grid">
-        <div className="today-main">
-          <div className="section-heading">
-            <div className="section-title">
-              <h2>Your classes</h2>
-              <span className="count-pill">{sessions.length}</span>
-            </div>
-            <div className="segmented">
-              <button
-                className={!calendar ? "active" : ""}
-                onClick={() => {
-                  setCalendar(false);
-                  setDate(today);
-                }}
-              >
-                Today
-              </button>
-              <button
-                className={calendar ? "active" : ""}
-                onClick={() => setCalendar(true)}
-              >
-                <CalendarDays size={14} />
-                Calendar
-              </button>
-            </div>
-          </div>
-          {calendar && (
-            <div className="week-strip">
-              <button
-                className="icon-button"
-                aria-label="Previous week"
-                onClick={() => setDate(addDays(date, -7))}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              {Array.from({ length: 7 }, (_, i) =>
-                addDays(date, -((weekday(date) + 6) % 7) + i),
-              ).map((d) => (
-                <button
-                  className={d === date ? "active" : ""}
-                  key={d}
-                  onClick={() => setDate(d)}
-                >
-                  <span>
-                    {dateObject(d).toLocaleDateString("en-GB", {
-                      weekday: "short",
-                      timeZone: "Asia/Colombo",
-                    })}
-                  </span>
-                  <strong>{dateObject(d).getDate()}</strong>
-                  <i
-                    className={
-                      sessionsFor(d, schedules, overrides).length
-                        ? "has-class"
-                        : ""
-                    }
-                  />
-                </button>
-              ))}
-              <button
-                className="icon-button"
-                aria-label="Next week"
-                onClick={() => setDate(addDays(date, 7))}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          )}
-          <div className="class-list">
-            {sessions.map((session, i) => {
-              const c = classes.find((c) => c.id === session.classId)!;
-              if (!c) return null;
-              const count = students.filter((s) => s.classId === c.id).length;
-              const marked = attendance.filter(
-                (a) =>
-                  a.sessionId === session.id &&
-                  students.some((s) => s.id === a.studentId),
-              ).length;
-              return (
-                <article
-                  key={session.id}
-                  className={
-                    "class-card " +
-                    c.color +
-                    (session.cancelled ? " cancelled" : "")
-                  }
-                >
-                  <div className="class-card-top">
-                    <div className={"class-icon " + c.color}>
-                      <GraduationCap size={25} />
-                    </div>
-                    <div className="class-name">
-                      <div>
-                        <h3>{c.name}</h3>
-                        <Badge
-                          tone={
-                            session.cancelled
-                              ? "neutral"
-                              : session.extra
-                                ? "violet"
-                                : i === 0
-                                  ? "mint"
-                                  : "neutral"
-                          }
-                          dot
-                        >
-                          {session.cancelled
-                            ? "Cancelled"
-                            : session.extra
-                              ? "Extra class"
-                              : i === 0
-                                ? "Weekly class"
-                                : "Weekly class"}
-                        </Badge>
-                      </div>
-                      <p>{c.subject}</p>
-                    </div>
-                    {role !== "viewer" && (
-                      <button
-                        className="icon-button class-options"
-                        aria-label={"Manage " + c.name}
-                        onClick={() => scheduleEditor(session)}
-                      >
-                        <Ellipsis size={20} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="class-meta">
-                    <span>
-                      <Clock size={15} />
-                      {timeText(session.start)}{" "}
-                      <span className="time-dash">–</span>{" "}
-                      {timeText(session.end)}
-                    </span>
-                    <span>
-                      <MapPin size={15} />
-                      {c.room}
-                    </span>
-                  </div>
-                  <div className="class-footer">
-                    <div className="class-students">
-                      <div className="avatar-stack">
-                        {students
-                          .filter((s) => s.classId === c.id)
-                          .slice(0, 3)
-                          .map((s) => (
-                            <Avatar key={s.id} student={s} size="tiny" />
-                          ))}
-                      </div>
-                      <span>
-                        <strong>{plural(count, "student")}</strong>{" "}
-                        {marked > 0 && <small>· {marked} present</small>}
-                      </span>
-                    </div>
-                    <button
-                      className={"button " + (i === 0 ? "primary" : "subtle")}
-                      onClick={() => openClass(session)}
-                    >
-                      Open
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-            {sessions.length === 0 && (
-              <div className="empty-state">
-                <CalendarDays size={35} />
-                <h3>No classes scheduled</h3>
-                <p>Add an extra class or choose another day.</p>
-                {role !== "viewer" && (
-                  <button
-                    className="button primary"
-                    onClick={() => {
-                      setEditing(null);
-                      setModal("extra");
-                    }}
-                  >
-                    <Plus size={16} />
-                    Add a class
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="class-tools">
-            <button onClick={() => setModal("manage")}>
-              <Settings size={17} />
-              Manage classes
-              <ArrowUpRight size={15} />
-            </button>
-            <span />
-            <button onClick={() => setModal("free")}>
-              <CalendarClock size={17} />
-              Find free slot
-              <ArrowUpRight size={15} />
-            </button>
-          </div>
-          <div className="section-heading activity-title">
-            <h2>Recent activity</h2>
-            <button
-              className="text-button"
-              onClick={() => setModal("activity")}
-            >
-              View all
-              <ArrowRight size={14} />
-            </button>
-          </div>
-          <div className="activity-list">
-            {recent.length ? (
-              recent.slice(0, 3).map((r) => (
-                <div key={r.id} className="activity-row">
-                  <span
-                    className={
-                      "activity-icon " +
-                      (r.entity === "fees" ? "peach" : "mint")
-                    }
-                  >
-                    <Icon
-                      icon={
-                        r.entity === "fees"
-                          ? Coins
-                          : r.entity === "issues"
-                            ? BookOpen
-                            : Check
-                      }
-                      size={16}
-                    />
-                  </span>
-                  <div>
-                    <strong>
-                      {r.entity === "attendance"
-                        ? "Marked present"
-                        : r.entity === "fees"
-                          ? "Fee paid"
-                          : r.entity === "issues"
-                            ? "Tute given"
-                            : r.description}
-                    </strong>
-                    <p>
-                      {students.find(
-                        (s) => r.key.startsWith(s.id + "@") || r.key === s.id,
-                      )?.name || "Class timetable"}{" "}
-                      {r.pending && (
-                        <span className="activity-pending">
-                          {" "}
-                          · Waiting to sync
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <time>
-                    {new Date(r.at).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      timeZone: "Asia/Colombo",
-                    })}
-                  </time>
-                </div>
-              ))
-            ) : (
-              <div className="activity-empty">
-                <span className="activity-icon mint">
-                  <Check size={16} />
-                </span>
-                <p>
-                  You’re all set. New activity will appear here as you teach.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-        <aside className="today-aside">
-          <MiniCalendar
-            date={date}
-            onDate={(d) => {
-              setDate(d);
-              setCalendar(d !== today);
-            }}
-            schedules={schedules}
-            overrides={overrides}
-          />
-        </aside>
       </div>
     </>
   );
