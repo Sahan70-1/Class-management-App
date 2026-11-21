@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import {
   BookOpen,
   CheckCheck,
@@ -74,7 +75,7 @@ export function ScanTab({
   schedules: Schedule[];
   overrides: Override[];
   markAttendance: () => Promise<void>;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   issueTute: () => Promise<void>;
   scanResult: (raw: string) => void;
   setToast: React.Dispatch<React.SetStateAction<string>>;

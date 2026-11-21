@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { MemberAvatar } from "./MemberAvatar";
 import {
   Bell,
@@ -22,7 +23,7 @@ export function Topbar({
   setMobileMenu: React.Dispatch<React.SetStateAction<boolean>>;
   tab: Tab;
   data: StoreState;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
 }) {
   return (
     <header className="topbar">

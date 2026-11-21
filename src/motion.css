@@ -1,0 +1,41 @@
+@media (prefers-reduced-motion: no-preference) {
+  .modal[open],
+  .toast,
+  .checkin-card {
+    animation: appear 110ms ease-out;
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .button,
+  .icon-button,
+  .main-nav button,
+  .bottom-nav button {
+    transition:
+      background-color 100ms ease-out,
+      color 100ms ease-out,
+      opacity 90ms ease-out;
+  }
+
+  .spinning {
+    animation-delay: 160ms;
+  }
+}
+
+/* Give touch feedback without moving controls under the user's finger. */
+@media (pointer: coarse) {
+  .button:enabled:active,
+  .icon-button:enabled:active,
+  .main-nav button:enabled:active,
+  .bottom-nav button:enabled:active {
+    opacity: 0.78;
+    transition-duration: 0s;
+  }
+}

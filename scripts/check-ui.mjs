@@ -4,13 +4,14 @@ const { chromium } = await import(
 import { mkdir } from "node:fs/promises";
 await mkdir("work", { recursive: true });
 import assert from "node:assert/strict";
+import { assertResponsiveDialog } from "./assert-responsive-dialog.mjs";
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
   headless: true,
   args: ["--no-sandbox"],
 });
 try {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 768, 1440]) {
     const context = await browser.newContext({
         viewport: { width, height: 1000 },
       }),
@@ -19,8 +20,11 @@ try {
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("http://127.0.0.1:8787");
     await page.getByRole("heading", { name: "Today." }).waitFor();
-    const close = () =>
-      page.getByRole("button", { name: "Close dialog", exact: true }).click();
+    const panel = (name) => page.getByRole("dialog", { name, exact: true });
+    const close = (name) =>
+      (name ? panel(name) : page.getByRole("dialog"))
+        .getByRole("button", { name: "Close dialog", exact: true })
+        .click();
     async function openClasses() {
       if (width <= 760)
         await page.getByRole("button", { name: "Open menu" }).click();
@@ -28,20 +32,49 @@ try {
         .getByRole("button", { name: "Your classes", exact: true })
         .click();
     }
-    await openClasses();
     await page
+      .getByRole("button", { name: "Manage tutes", exact: true })
+      .click();
+    const tutes = panel("Manage tutes");
+    await assertResponsiveDialog(tutes);
+    await tutes.locator(".tute-catalog summary").click();
+    await assertResponsiveDialog(tutes);
+    await tutes.locator(".tute-catalog button").first().click();
+    await tutes.locator(".tute-distribution summary").click();
+    await assertResponsiveDialog(tutes);
+    await close("Manage tutes");
+    await openClasses();
+    const classes = panel("Your classes");
+    const manage = panel("Manage classes");
+    await classes
       .getByRole("button", { name: "Manage classes", exact: true })
       .click();
-    await page
-      .getByRole("heading", { name: "Manage classes", exact: true })
-      .waitFor();
-    await close();
-    await openClasses();
-    await page
+    await assertResponsiveDialog(manage);
+    await manage
+      .getByRole("button", { name: "Edit", exact: true })
+      .first()
+      .click();
+    await assertResponsiveDialog(panel("Edit class session"));
+    await page.keyboard.press("Escape");
+    await manage
+      .getByRole("button", { name: "Edit class", exact: true })
+      .first()
+      .click();
+    await close("Edit class");
+    await close("Manage classes");
+    await classes
       .getByRole("button", { name: "Find free slot", exact: true })
       .click();
-    await page.getByRole("dialog").waitFor();
-    await close();
+    await assertResponsiveDialog(panel("Find free slot"));
+    await close("Find free slot");
+    const firstSession = classes
+      .getByRole("button", { name: "Open", exact: true })
+      .first();
+    if (await firstSession.count()) {
+      await firstSession.click();
+      await close("Session overview");
+    }
+    await close("Your classes");
     const navigation = page.locator(".bottom-nav button");
     await navigation.nth(1).click();
     await page.getByRole("heading", { name: "Scan a student." }).waitFor();
@@ -67,7 +100,8 @@ try {
       .getByRole("button", { name: "View student QR", exact: true })
       .click();
     await page.locator(".qr-canvas canvas").waitFor();
-    await close();
+    await close("One student. One permanent QR.");
+    await close("Student profile");
     await navigation.nth(3).click();
     await page.getByRole("heading", { name: "Reports." }).waitFor();
     for (const name of ["Attendance", "Monthly fees", "Tute distribution"]) {

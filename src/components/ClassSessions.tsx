@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import {
   CalendarClock,
   CalendarDays,
@@ -44,7 +45,7 @@ export function ClassSessions({
   role: Role;
   openClass: (session: Session) => void;
   scheduleEditor: (session: Session) => void;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   setEditing: React.Dispatch<React.SetStateAction<Session | null>>;
 }) {
   return (

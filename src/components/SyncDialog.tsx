@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { plural } from "../utils";
 import {
   ArrowRight,
@@ -12,7 +13,7 @@ export function SyncDialog({
   setModal,
   data,
 }: {
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   data: StoreState;
 }) {
   return (

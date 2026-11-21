@@ -267,11 +267,12 @@ try {
   await a.getByRole("button", {name: "Your classes", exact:true}).click();
   await a.getByRole("button", { name: "Manage classes", exact: true }).click();
   await a.getByRole("button", { name: "Add class", exact: true }).click();
-  await a.getByRole("dialog").getByRole("combobox").waitFor();
+  await a.getByRole("dialog",{name:"Add class",exact:true}).getByRole("combobox").waitFor();
   await a.getByLabel("Class name", { exact: true }).waitFor();
   await a.getByLabel("Monthly fee (LKR)", { exact: true }).waitFor();
-  await a.getByRole("button", { name: "Close dialog", exact: true }).click();
-  await a.getByRole("button", { name: "Close dialog", exact: true }).click();
+  await a.getByRole("dialog", {name:"Add class",exact:true}).getByRole("button", { name: "Close dialog" }).click();
+  await a.getByRole("dialog", {name:"Manage classes",exact:true}).getByRole("button", { name: "Close dialog" }).click();
+  await a.getByRole("dialog", {name:"Your classes", exact:true}).getByRole("button",{name:"Close dialog"}).click();
   await a.getByRole("button", { name: "Manage tutes", exact: true }).click();
   assert.equal(await a.getByLabel("Lesson title").isEnabled(), true);
   await a.getByRole("button", { name: "Close dialog", exact: true }).click();

@@ -41,9 +41,10 @@ import {
   type Session,
   type Student,
 } from "./model";
-import { type Tab } from "./navigation";
+import { nextDialogPath, type DialogName, type Tab } from "./navigation";
 import { getSnapshot, initialize, mutate, subscribe } from "./store";
 import { download } from "./utils";
+import { confirmCheckinSave } from "./feedback";
 
 export function App() {
   const data = useSyncExternalStore(subscribe, getSnapshot);
@@ -52,7 +53,7 @@ export function App() {
     [date, setDate] = useState(today),
     [selected, setSelected] = useState<string>(""),
     [student, setStudent] = useState<Student | null>(null),
-    [modal, setModal] = useState<string | null>(null),
+    [dialogPath, setDialogPath] = useState<readonly DialogName[]>([]),
     [editing, setEditing] = useState<Session | null>(null),
     [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all"),
@@ -62,6 +63,13 @@ export function App() {
     [previewRole, setPreviewRole] = useState<Role>("admin"),
     [toast, setToast] = useState(""),
     [mobileMenu, setMobileMenu] = useState(false);
+  const modal = dialogPath.at(-1);
+  function setModal(next: DialogName | null, replace = false) {
+    // An async save can finish after its dialog has already been dismissed.
+    setDialogPath((current) =>
+      current === dialogPath ? nextDialogPath(current, next, replace) : current,
+    );
+  }
   const students = values(data.records, "students"),
     classes = values(data.records, "classes"),
     schedules = values(data.records, "schedules"),
@@ -131,13 +139,17 @@ export function App() {
   ) {
     try {
       await mutate(entity, value, role);
+      confirmCheckinSave(entity);
       setToast(message);
+      return true;
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Could not save.");
+      return false;
     }
   }
   function navigate(t: Tab) {
     if (t === "Today") setDate(today);
+    setDialogPath([]);
     setTab(t);
     setStudent(null);
     setQuery("");
@@ -391,8 +403,10 @@ export function App() {
           </button>
         </div>
       )}
-      {modal === "sync" && <SyncDialog setModal={setModal} data={data} />}
-      {modal === "classes" && (
+      {dialogPath.includes("sync") && (
+        <SyncDialog setModal={setModal} data={data} />
+      )}
+      {dialogPath.includes("classes") && (
         <ClassSessions
           sessions={sessions}
           date={date}
@@ -406,7 +420,7 @@ export function App() {
           setEditing={setEditing}
         />
       )}
-      {modal === "calendar" && (
+      {dialogPath.includes("calendar") && (
         <Modal title="Calendar" onClose={() => setModal(null)}>
           <MiniCalendar
             date={date}
@@ -419,10 +433,10 @@ export function App() {
           />
         </Modal>
       )}
-      {modal === "activity" && (
+      {dialogPath.includes("activity") && (
         <ActivityDialog profiles={profiles} setModal={setModal} data={data} />
       )}
-      {modal === "settings" && (
+      {dialogPath.includes("settings") && (
         <SettingsModal
           photo={myPhoto}
           savePhoto={async (photo) => {
@@ -437,7 +451,7 @@ export function App() {
           notify={setToast}
         />
       )}
-      {modal === "overview" && activeSession && currentClass && (
+      {dialogPath.includes("overview") && activeSession && currentClass && (
         <Modal
           title="Session overview"
           subtitle={shortDate(activeSession.date)}
@@ -451,15 +465,12 @@ export function App() {
             attendance={attendance}
             role={role}
             onStart={() => {
-              setModal(null);
-              setTab("Scan");
-              setStudent(null);
-              setQuery("");
+              navigate("Scan");
             }}
           />
         </Modal>
       )}
-      {modal === "manage" && (
+      {dialogPath.includes("manage") && (
         <ManageClassesDialog
           notify={setToast}
           setModal={setModal}
@@ -481,18 +492,18 @@ export function App() {
           role={role}
           onClose={() => setModal(null)}
           onSave={async (entity, value) => {
-            await save(entity, value, "Schedule saved with change history");
-            setModal(null);
+            if (await save(entity, value, "Schedule saved with change history"))
+              setModal(null);
           }}
         />
       )}
-      {modal === "history" && (
+      {dialogPath.includes("history") && (
         <ScheduleHistoryDialog
           setModal={setModal}
           changeHistory={changeHistory}
         />
       )}
-      {modal === "free" && (
+      {dialogPath.includes("free") && (
         <FreeTimes
           date={date}
           classes={classes}
@@ -501,7 +512,7 @@ export function App() {
           role={role}
           onClose={() => setModal(null)}
           onChoose={async (c, d, start, end) => {
-            await save(
+            const saved = await save(
               "schedules",
               {
                 id: "extra-" + crypto.randomUUID(),
@@ -511,36 +522,42 @@ export function App() {
               },
               "Extra class added",
             );
-            setDate(d);
-            setModal(null);
+            if (saved) {
+              setDate(d);
+              setModal(null);
+            }
           }}
         />
       )}
-      {modal === "register" && (
+      {dialogPath.includes("register") && (
         <RegisterModal
           classes={classes}
           existing={student}
           students={students}
           onClose={() => setModal(null)}
           onSave={async (s) => {
-            await save("students", s, "Student saved. Their QR is ready.");
+            const saved = await save(
+              "students",
+              s,
+              "Student saved. Their QR is ready.",
+            );
+            if (!saved) return;
             setStudent(s);
-            setModal("qr");
+            setModal("qr", true);
           }}
         />
       )}
-      {modal === "qr" && student && (
+      {dialogPath.includes("qr") && student && (
         <QRModal
           student={student}
           classLabel={classes.find((c) => c.id === student.classId)?.name || ""}
           onClose={() => setModal(null)}
           onScan={() => {
-            setModal(null);
             navigate("Scan");
           }}
         />
       )}
-      {modal === "profile" && student && (
+      {dialogPath.includes("profile") && student && (
         <StudentProfileDialog
           setModal={setModal}
           student={student}
@@ -551,31 +568,34 @@ export function App() {
           role={role}
         />
       )}
-      {modal === "payment" && student && !student.removedAt && currentClass && (
-        <PaymentModal
-          student={student}
-          amount={currentClass.fee}
-          month={month}
-          onClose={() => setModal(null)}
-          onSave={async (method) => {
-            await save(
-              "fees",
-              {
-                id: student.id + "@" + currentClass.id + "@" + month,
-                studentId: student.id,
-                classId: currentClass.id,
-                month,
-                amount: currentClass.fee,
-                method,
-                at: new Date().toISOString(),
-              },
-              "Payment recorded. Attendance and tute status are unchanged.",
-            );
-            setModal(null);
-          }}
-        />
-      )}
-      {modal === "tutes" && (
+      {dialogPath.includes("payment") &&
+        student &&
+        !student.removedAt &&
+        currentClass && (
+          <PaymentModal
+            student={student}
+            amount={currentClass.fee}
+            month={month}
+            onClose={() => setModal(null)}
+            onSave={async (method) => {
+              const saved = await save(
+                "fees",
+                {
+                  id: student.id + "@" + currentClass.id + "@" + month,
+                  studentId: student.id,
+                  classId: currentClass.id,
+                  month,
+                  amount: currentClass.fee,
+                  method,
+                  at: new Date().toISOString(),
+                },
+                "Payment recorded. Attendance and tute status are unchanged.",
+              );
+              if (saved) setModal(null);
+            }}
+          />
+        )}
+      {dialogPath.includes("tutes") && (
         <TuteModal
           classes={classes}
           month={monthOf(today)}

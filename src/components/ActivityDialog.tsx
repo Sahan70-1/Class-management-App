@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { MemberAvatar } from "./MemberAvatar";
 import React from "react";
 import { type MemberProfile } from "../model";
@@ -8,7 +9,7 @@ export function ActivityDialog({
   data,
   profiles,
 }: {
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   data: StoreState;
   profiles: MemberProfile[];
 }) {

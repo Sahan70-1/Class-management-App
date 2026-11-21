@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import {
   ArrowRight,
   CheckCheck,
@@ -32,7 +33,7 @@ export function TodayTab({
   activeSession: Session | null;
   classes: ClassGroup[];
   openClass: (session: Session) => void;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   present: number;
   collected: number;
   students: Student[];

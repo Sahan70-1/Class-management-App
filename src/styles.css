@@ -37,6 +37,9 @@
 body {
   margin: 0;
 }
+body:has(dialog[open]) {
+  overflow: hidden;
+}
 button,
 input,
 select,
@@ -5677,8 +5680,9 @@ input[type="radio"] {
   background: var(--track);
   color: var(--muted);
 }
+/* Native date and month pickers need a full row in narrow dialogs. */
 .form-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 12px;
 }
 .form-hint,
@@ -6255,7 +6259,7 @@ input[type="radio"] {
 }
 .report-stats .stat-value { overflow-wrap: anywhere; }
 .tute-catalog ul {
-  max-height: 13rem; overflow-y: auto; list-style: none;
+  list-style: none;
   margin: 8px 0 0; padding: 3px;
 }
 .tute-catalog button {
@@ -6264,3 +6268,74 @@ input[type="radio"] {
 }
 .tute-catalog button[aria-pressed="true"] { background: var(--light-green); }
 .tute-catalog small { color: var(--muted); }
+
+/* The dialog is the scroll surface. All of its rows fit the available width. */
+.modal {
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+.form :is(label, select, input, textarea, fieldset),
+.modal-heading > div,
+.checkin-person > div,
+.checkin-status > div > span:not(.badge) {
+  min-inline-size: 0;
+}
+.form :is(input, select, textarea, .button),
+.modal-action-row > button {
+  max-inline-size: 100%;
+}
+.tute-manager { gap: 0.875rem; }
+.tute-manager details {
+  min-inline-size: 0;
+  border-block-start: 1px solid var(--track);
+}
+.tute-manager summary {
+  cursor: pointer;
+  padding-block: 12px;
+  min-height: 44px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.tute-manager summary span {
+  color: var(--muted);
+  font-weight: 400;
+}
+.tute-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tute-catalog button {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tute-roster > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+@media (max-width: 760px) {
+  .class-footer, .page-heading-actions, .page-heading {
+    flex-wrap: wrap;
+  }
+  .checkin-actions > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  }
+  .class-name, .checkin-person h2, .checkin-status small {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Keep the editor in one place when its catalog or roster expands. */
+  .modal:has(.tute-manager) {
+    position: fixed;
+    inset-block: max(12px, env(safe-area-inset-top)) auto;
+    margin-block: 0;
+    margin-inline: auto;
+    max-block-size: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
+  }
+  .class-tools {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}

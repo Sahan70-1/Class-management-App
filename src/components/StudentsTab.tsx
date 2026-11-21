@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import {
   ChevronRight,
   ScanLine,
@@ -39,7 +40,7 @@ export function StudentsTab({
   filter: string;
   setFilter: React.Dispatch<React.SetStateAction<string>>;
   classes: ClassGroup[];
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   students: Student[];
   tutes: Tute[];
   today: string;

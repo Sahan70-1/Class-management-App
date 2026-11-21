@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import {
   ChevronRight,
   GraduationCap,
@@ -9,8 +10,7 @@ import { mutate } from "../store";
 import { ClassForm } from "./ClassForm";
 import { classGrade, money } from "../model";
 import {
-  addDays,
-  sessionsFor,
+  nextScheduleSession,
   shortDate,
   timeText,
   type ClassGroup,
@@ -31,7 +31,7 @@ export function ManageClassesDialog({
   scheduleEditor,
   overrides,
 }: {
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   role: Role;
   notify: (message: string) => void;
   setEditing: React.Dispatch<React.SetStateAction<Session | null>>;
@@ -166,9 +166,12 @@ export function ManageClassesDialog({
                 <button
                   className="button white"
                   onClick={() => {
-                    let d = s.extraDate || date;
-                    while (!sessionsFor(d, [s], []).length) d = addDays(d, 1);
-                    scheduleEditor(sessionsFor(d, [s], overrides)[0]);
+                    const session = nextScheduleSession(s, date, overrides);
+                    if (session) scheduleEditor(session);
+                    else
+                      notify(
+                        "Choose an earlier date in Calendar to edit this timetable.",
+                      );
                   }}
                 >
                   Edit

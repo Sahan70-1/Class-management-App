@@ -30,6 +30,17 @@ export function values<K extends Entity>(records:StoredRecord[],entity:K):Entity
 export function sessionsFor(date:string,schedules:Schedule[],overrides:Override[]):Session[]{
   return schedules.flatMap(s=>{const v=[...s.versions].reverse().find(v=>v.from<=date&&(!v.until||date<=v.until));if(!v||(s.extraDate?s.extraDate!==date:v.weekday!==weekday(date)))return [];const o=overrides.find(o=>o.scheduleId===s.id&&o.date===date);return [{id:s.id+'@'+date,scheduleId:s.id,classId:s.classId,date,start:o?.start??v.start,end:o?.end??v.end,cancelled:!!v.cancelled||!!o?.cancelled,extra:!!s.extraDate}];}).sort((a,b)=>a.start.localeCompare(b.start));
 }
+
+export function nextScheduleSession(schedule: Schedule, date: string, overrides: Override[]): Session | undefined {
+  if (schedule.extraDate) return sessionsFor(schedule.extraDate, [schedule], overrides)[0];
+  for (const version of schedule.versions) {
+    if (version.until && version.until < date) continue;
+    const start = date < version.from ? version.from : date;
+    const candidate = addDays(start, (version.weekday - weekday(start) + 7) % 7);
+    if (!version.until || candidate <= version.until) return sessionsFor(candidate, [schedule], overrides)[0];
+  }
+  return undefined;
+}
 export const overlaps=(a:Pick<Session,'start'|'end'>,b:Pick<Session,'start'|'end'>)=>minutes(a.start)<minutes(b.end)&&minutes(b.start)<minutes(a.end);
 export function freeSlots(date:string,duration:number,schedules:Schedule[],overrides:Override[],exclude?:string){const busy=sessionsFor(date,schedules,overrides).filter(s=>!s.cancelled&&s.scheduleId!==exclude);const result:{start:string;end:string}[]=[];const t=(m:number)=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');for(let m=480;m+duration<=1200;m+=30){const slot={start:t(m),end:t(m+duration)};if(!busy.some(s=>overlaps(s,slot)))result.push(slot);}return result;}
 export function findConflict(candidate:Schedule,schedules:Schedule[],overrides:Override[]){const start=candidate.extraDate||candidate.versions.at(-1)!.from;for(let i=0;i<(candidate.extraDate?1:370);i++){const date=addDays(start,i);const own=sessionsFor(date,[candidate],overrides).filter(s=>!s.cancelled);const others=sessionsFor(date,schedules.filter(s=>s.id!==candidate.id),overrides).filter(s=>!s.cancelled);for(const a of own)for(const b of others)if(overlaps(a,b))return {date,session:b};}return null;}

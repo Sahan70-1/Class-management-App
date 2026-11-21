@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { Download, Plus, ShieldCheck } from "lucide-react";
 import React from "react";
 import { dateObject, type Role, type Student } from "../model";
@@ -17,7 +18,7 @@ export function PageHeading({
   role: Role;
   date: string;
   setStudent: React.Dispatch<React.SetStateAction<Student | null>>;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   exportReport: () => void;
 }) {
   return (
