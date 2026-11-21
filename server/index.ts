@@ -1,3 +1,4 @@
+import {deviceObservation, manageMembers} from "./members";
 import {seedRecords} from '../src/seed';
 import {canWrite,validateProfile,validateClass,validateStudentRemoval,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Tute,type Issue,type Schedule,type Override} from '../src/model';
 interface Env { DB:D1Database; ASSETS:Fetcher; LOCAL_DEMO?:string; INITIAL_ADMIN_EMAIL?:string }
@@ -34,16 +35,14 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  try{
  let member=await env.DB.prepare('SELECT role FROM members WHERE email=?').bind(email).first<{role:Role}>();
  if(!member){const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM members').first<{count:number}>();if(count?.count===0&&(env.LOCAL_DEMO==='true'||email===env.INITIAL_ADMIN_EMAIL?.toLowerCase())){await env.DB.prepare("INSERT OR IGNORE INTO members (email,role,created_at) SELECT ?, 'admin', ? WHERE NOT EXISTS (SELECT 1 FROM members)").bind(email,new Date().toISOString()).run();member=await env.DB.prepare('SELECT role FROM members WHERE email=?').bind(email).first<{role:Role}>();}}
- if(!member)return json({error:'Ask the tutor to add your email to this workspace.'},403);
+ if(!member)return json({code:'NOT_A_WORKSPACE_MEMBER',error:'Ask the tutor to add your email to this workspace.'},403);
  const role=member.role;
- if(url.pathname==='/api/members'){
- if(role!=='admin')return json({error:'Admin access required.'},403);
- if(request.method==='GET')return json((await env.DB.prepare('SELECT email,role FROM members ORDER BY email').all()).results);
- const body:any=await request.json();if(typeof body.email!=='string'||!/^\S+@\S+\.\S+$/.test(body.email)||!['staff','viewer','admin'].includes(body.role))return json({error:'Provide a valid email and role.'},400);
- if(body.email.toLowerCase()===email)return json({error:'You cannot change your own role.'},400);
- await env.DB.prepare('INSERT INTO members(email,role,created_at) VALUES(?,?,?) ON CONFLICT(email) DO UPDATE SET role=excluded.role').bind(body.email.toLowerCase(),body.role,new Date().toISOString()).run();return json({ok:true});
- }
+ if(url.pathname==='/api/members')return await manageMembers(request,env.DB,email,role);
  if(url.pathname!=='/api/sync'||request.method!=='POST')return json({error:'Not found.'},404);
+ const intendedAccount=request.headers.get('X-Classroom-Account');
+ if(intendedAccount!==null && intendedAccount.trim().toLowerCase()!==email) {
+   return json({code:'WORKSPACE_ACCOUNT_CHANGED',error:'Sign in with the account that saved these offline changes.'},409);
+ }
  if(Number(request.headers.get('content-length'))>2500000)return json({error:'Request too large.'},413);
  const body:any=await request.json();if(!Array.isArray(body.operations)||body.operations.length>100)return json({error:'Invalid batch.'},400);
  const lastSeq=body.lastSeq??0;if(!Number.isSafeInteger(lastSeq)||lastSeq<0)return json({error:'Invalid sync cursor.'},400);
@@ -76,6 +75,7 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  accepted.push(op.id);all=[...all.filter(r=>recordId(r.entity,r.key)!==recordId(op.entity,op.key)),{entity:op.entity,key:op.key,value:op.value,revision:op.baseRevision+1}];
  }
  // D1 batches are transactional: records and cursor must describe the same snapshot.
+ const device=deviceObservation(request,env.DB,email);
  const snapshot=await env.DB.batch([
  env.DB.prepare('SELECT COALESCE(MAX(seq),0) AS seq FROM events'),
  env.DB.prepare(`WITH latest AS (SELECT entity,record_key,MAX(seq) AS seq FROM events GROUP BY entity,record_key)
@@ -86,7 +86,8 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  env.DB.prepare(`SELECT e.entity,e.record_key AS key FROM events e
  LEFT JOIN records r ON r.entity=e.entity AND r.record_key=e.record_key
  WHERE e.seq>? AND r.record_key IS NULL GROUP BY e.entity,e.record_key`).bind(lastSeq),
- env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200')
+ env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200'),
+ ...(device?[device]:[])
  ]);
  const nextSeq=Number((snapshot[0].results[0] as {seq:number}).seq);
  return json({accepted,conflicts,records:snapshot[1].results.map((r:any)=>({...r,value:JSON.parse(r.value)})).filter(r=>body.includeProfiles===true||r.entity!=='profiles'),deleted:snapshot[2].results,full:lastSeq===0||lastSeq>nextSeq,lastSeq:nextSeq,history:snapshot[3].results,role,email});

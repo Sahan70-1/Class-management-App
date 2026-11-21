@@ -68,6 +68,7 @@ test("recent activity uses the matching member picture and falls back to an init
     description: "Tute deleted",
   }));
   const data: StoreState = {
+    accessMessage: null,
     records: [],
     pending: [],
     history,

@@ -42,7 +42,7 @@ import {
   type Student,
 } from "./model";
 import { nextDialogPath, type DialogName, type Tab } from "./navigation";
-import { getSnapshot, initialize, mutate, subscribe } from "./store";
+import { getSnapshot, initialize, mutate, subscribe, sync } from "./store";
 import { download } from "./utils";
 import { confirmCheckinSave } from "./feedback";
 
@@ -136,6 +136,14 @@ export function App() {
   useEffect(() => {
     if (data.role !== "admin") setPreviewRole(data.role);
   }, [data.role]);
+  useEffect(() => {
+    if (data.accessMessage) {
+      setDialogPath([]);
+      setMobileMenu(false);
+      setStudent(null);
+      setTab("Today");
+    }
+  }, [data.accessMessage]);
   async function save<K extends Entity>(
     entity: K,
     value: EntityMap[K],
@@ -264,6 +272,23 @@ export function App() {
     setEditing(session);
     setModal("schedule");
   };
+
+  if (data.accessMessage) {
+    return (
+      <main>
+        <section className="panel form" aria-labelledby="workspace-access-title">
+          <h1 id="workspace-access-title">Workspace access</h1>
+          <p>{data.accessMessage}</p>
+          <div className="modal-action-row">
+            <button className="button primary" disabled={data.syncing || !data.online} onClick={() => void sync()}>
+              {data.syncing ? "Checking…" : "Check access again"}
+            </button>
+            <a className="button white" target="_top" href="/signout-with-chatgpt?return_to=%2F">Switch account</a>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <div className="app-shell">

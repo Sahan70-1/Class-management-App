@@ -82,7 +82,7 @@ The calendar supports recurring weekly classes and extra sessions. **This day on
 
 Sites provides ChatGPT authentication and the private Site boundary. Keep this deployment private: do not publish the pupil directory publicly. **Production must set `INITIAL_ADMIN_EMAIL` to the tutor's authenticated email**, so the first arbitrary visitor cannot become admin. Do not set `LOCAL_DEMO` in production. The local-only Wrangler configuration enables a simulated tutor for development.
 
-The tutor adds member email/role in **Workspace settings**, then separately grants that person access through the private Site sharing controls. Membership alone does not grant Site access. All API changes are authorized server-side:
+The tutor opens **Your teaching space → Workspace members → Add member** to assign a role, then separately grants private Site access through the sharing controls. The red bin removes a member after confirmation. The API checks administrator permissions and prevents self-removal. Removal preserves attendance and payment history. A removed member’s device learns of the change on its next online sync. Membership alone does not grant Site access. All API changes are authorized server-side:
 
 | Role | Permissions |
 | --- | --- |
@@ -128,6 +128,8 @@ Admin and attendance staff can add or edit a class from **Today → Manage class
 Staff may register new students but editing an existing student and managing workspace members remain admin-only. Staff can also edit day/weekly timetables, create extra sessions, cancel sessions, and edit monthly tute titles. Changes use the existing durable outbox, revision checks and schedule overlap protection. Registration retries are idempotent for the original authenticated author.
 
 **Open class** opens a session overview with class details, date/time, fee, attendance list and present/not-marked/total counts. Counts are specific to that session, include current enrollees and students already marked before a class transfer, and include pending local changes. **Start scanning** explicitly switches to Scan with that session selected. Opening the overview does not record attendance, payment or tute issuance; cancelled sessions and read-only viewers cannot start scanning from it.
+
+The member directory shows the browser and operating system observed on each installation’s most recent authenticated sync. Activity timestamps refresh up to once every five minutes per installation. New devices appear after syncing the updated app. Each member can tap the camera on their profile picture to take, choose, crop or remove their photo. Light and Dark appearance are available at the bottom of the sidebar and are saved on the device.
 
 ## Removing a student
 
