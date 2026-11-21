@@ -5,6 +5,7 @@ import { mkdir } from "node:fs/promises";
 await mkdir("work", { recursive: true });
 import assert from "node:assert/strict";
 import {
+  assertCardScrolling,
   assertDialogFrame,
   assertResponsiveDialog,
 } from "./assert-responsive-dialog.mjs";
@@ -18,6 +19,7 @@ try {
     { width: 320, height: 568, phone: true },
     { width: 390, height: 844, phone: true },
     { width: 844, height: 390, phone: true },
+    { width: 820, height: 1180, phone: true },
     { width: 768, height: 1000, phone: false },
     { width: 1440, height: 1000, phone: false },
   ];
@@ -25,16 +27,29 @@ try {
     const context = await browser.newContext({
         viewport: { width, height },
         hasTouch: phone,
+        isMobile: phone,
       }),
       page = await context.newPage(),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto("http://127.0.0.1:8787");
     await page.getByRole("heading", { name: "Today." }).waitFor();
+    if (phone) {
+      const viewport = await page
+        .locator('meta[name="viewport"]')
+        .getAttribute("content");
+      assert.doesNotMatch(viewport, /user-scalable\s*=\s*(?:no|0)\b/i);
+      const limit = viewport.match(/maximum-scale\s*=\s*([\d.]+)/i);
+      assert.ok(
+        !limit || Number(limit[1]) >= 2,
+        "The mobile viewport must allow pinch zoom",
+      );
+    }
     const panel = (name) => page.getByRole("dialog", { name, exact: true });
     const close = async (name) => {
       const active = name ? panel(name) : page.getByRole("dialog");
       await assertDialogFrame(active, phone);
+      if (phone) await assertCardScrolling(active);
       await active
         .getByRole("button", { name: "Close dialog", exact: true })
         .click();
@@ -50,22 +65,29 @@ try {
       .getByRole("button", { name: "Manage tutes", exact: true })
       .click();
     const tutes = panel("Manage tutes");
-    await assertDialogFrame(tutes, phone);
+    const tuteFrame = await assertDialogFrame(tutes, phone);
     await assertResponsiveDialog(tutes);
     await tutes.locator(".tute-catalog summary").click();
-    await assertDialogFrame(tutes, phone);
+    await assertDialogFrame(tutes, phone, tuteFrame);
     await assertResponsiveDialog(tutes);
     await tutes.locator(".tute-catalog button").first().click();
+    await assertDialogFrame(tutes, phone, tuteFrame);
     await tutes.locator(".tute-distribution summary").click();
     await assertResponsiveDialog(tutes);
+    await assertDialogFrame(tutes, phone, tuteFrame);
+    if (phone) await assertCardScrolling(tutes);
+    await tutes.locator(".tute-distribution summary").click();
+    await assertDialogFrame(tutes, phone, tuteFrame);
     await close("Manage tutes");
     await openClasses();
     const classes = panel("Your classes");
+    const classesFrame = await assertDialogFrame(classes, phone);
     const manage = panel("Manage classes");
     await classes
       .getByRole("button", { name: "Manage classes", exact: true })
       .click();
     await assertResponsiveDialog(manage);
+    const manageFrame = await assertDialogFrame(manage, phone);
     await manage
       .getByRole("button", { name: "Edit", exact: true })
       .first()
@@ -73,25 +95,28 @@ try {
     await assertResponsiveDialog(panel("Edit class session"));
     await assertDialogFrame(panel("Edit class session"), phone);
     await page.keyboard.press("Escape");
+    await assertDialogFrame(manage, phone, manageFrame);
     await manage
       .getByRole("button", { name: "Edit class", exact: true })
       .first()
       .click();
     await close("Edit class");
     await close("Manage classes");
+    await assertDialogFrame(classes, phone, classesFrame);
     await classes
       .getByRole("button", { name: "Find free slot", exact: true })
       .click();
     const free = panel("Find free slot");
-    await assertDialogFrame(free, phone);
+    const slotFrame = await assertDialogFrame(free, phone);
     const date = free.getByLabel("Date", { exact: true });
     const tomorrow = await date.evaluate((input) =>
       new Date(input.valueAsNumber + 86400000).toISOString().slice(0, 10),
     );
     await date.fill(tomorrow);
-    await assertDialogFrame(free, phone);
+    await assertDialogFrame(free, phone, slotFrame);
     const duration = free.getByLabel("Lesson duration", { exact: true });
     await duration.selectOption("60");
+    await assertDialogFrame(free, phone, slotFrame);
     const slots = free.getByRole("combobox", {
       name: "Available times",
       exact: true,
@@ -109,24 +134,11 @@ try {
       await free.locator(".slot-list button").first().click();
     }
     assert.equal(await book.isEnabled(), true);
-    await assertDialogFrame(free, phone);
+    await assertDialogFrame(free, phone, slotFrame);
     await duration.selectOption("180");
     assert.equal(await book.isEnabled(), false);
+    await assertDialogFrame(free, phone, slotFrame);
     await assertResponsiveDialog(free);
-    if (phone) {
-      // A user can scroll to the booking action and still reach Close in place.
-      const headingStayed = await free.evaluate((dialog) => {
-        const body = dialog.querySelector(".modal-body");
-        const close = dialog.querySelector('button[aria-label="Close dialog"]');
-        const initialTop = close.getBoundingClientRect().top;
-        body.scrollTop = body.scrollHeight;
-        const { top, bottom } = close.getBoundingClientRect();
-        return (
-          top >= 0 && bottom <= innerHeight && Math.abs(initialTop - top) <= 1
-        );
-      });
-      assert.equal(headingStayed, true);
-    }
     await close("Find free slot");
     const firstSession = classes
       .getByRole("button", { name: "Open", exact: true })
