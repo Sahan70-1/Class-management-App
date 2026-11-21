@@ -6,7 +6,7 @@ import { SessionOverview } from "./components/SessionOverview";
 import { Modal } from "./components/Modal";
 import { shortDate } from "./model";
 import { CheckCircle2, GraduationCap, WifiOff, X } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { ActivityDialog } from "./components/ActivityDialog";
 import { Badge } from "./components/Badge";
 import { BottomNavigation } from "./components/BottomNavigation";
@@ -82,6 +82,10 @@ export function App() {
   const profiles = values(data.records, "profiles");
   const myPhoto = profiles.find((p) => p.id === data.email)?.photo;
   const enrolled = activeStudentsOnly(students);
+  useLayoutEffect(() => {
+    const page = document.scrollingElement;
+    if (page) page.scrollTop = 0;
+  }, [tab]);
   useEffect(() => {
     if (student) {
       const latest = students.find((s) => s.id === student.id);
@@ -287,7 +291,7 @@ export function App() {
           data={data}
           setModal={setModal}
         />
-        <main>
+        <main key={tab}>
           <PageHeading
             tab={tab}
             student={student}

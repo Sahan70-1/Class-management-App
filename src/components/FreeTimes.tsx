@@ -1,5 +1,5 @@
 import { Check, Clock, Plus, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   freeSlots,
   sessionsFor,
@@ -42,6 +42,8 @@ export function FreeTimes({
     (s) => !s.cancelled,
   );
   const slots = freeSlots(day, duration, schedules, overrides);
+  const headingId = useId();
+  const selectedSlot = slots.find((slot) => slot.start === choice);
   return (
     <Modal
       title="Find free slot"
@@ -105,37 +107,62 @@ export function FreeTimes({
           </span>
         </div>
         <h3>
-          Available times <small className="muted">· {shortDate(day)}</small>
+          <span id={headingId}>Available times</span>{" "}
+          <small className="muted">· {shortDate(day)}</small>
         </h3>
-        <div className="slot-list">
-          {slots.map((s) => (
-            <button
-              className={choice === s.start ? "selected" : ""}
-              key={s.start}
-              onClick={() => setChoice(s.start)}
-            >
-              <span className="radio-dot" />
-              {timeText(s.start)} – {timeText(s.end)}
-              {choice === s.start && <Check size={16} />}
-            </button>
-          ))}
-          {!slots.length && (
-            <p className="muted">
-              No free {duration / 60}-hour slot. Choose another date or a
-              shorter lesson.
-            </p>
-          )}
-        </div>
+        {slots.length > 0 && (
+          <select
+            className="slot-picker"
+            aria-labelledby={headingId}
+            value={selectedSlot?.start || ""}
+            onChange={(e) => setChoice(e.target.value)}
+          >
+            <option value="" disabled>
+              Choose a time
+            </option>
+            {slots.map((s) => (
+              <option value={s.start} key={s.start}>
+                {timeText(s.start)} – {timeText(s.end)}
+              </option>
+            ))}
+          </select>
+        )}
+        {slots.length > 0 && (
+          <div className="slot-list">
+            {slots.map((s) => (
+              <button
+                className={choice === s.start ? "selected" : ""}
+                aria-pressed={choice === s.start}
+                key={s.start}
+                onClick={() => setChoice(s.start)}
+              >
+                <span className="radio-dot" />
+                {timeText(s.start)} – {timeText(s.end)}
+                {choice === s.start && <Check size={16} />}
+              </button>
+            ))}
+          </div>
+        )}
+        {!slots.length && (
+          <p className="muted">
+            No free {duration / 60}-hour slot. Choose another date or a shorter
+            lesson.
+          </p>
+        )}
         {role !== "viewer" && (
           <button
             className="button primary full"
-            disabled={!choice || busy}
+            disabled={!selectedSlot || !classId || busy}
             onClick={async () => {
-              const slot = slots.find((s) => s.start === choice);
-              if (!slot) return;
+              if (!selectedSlot) return;
               setBusy(true);
               try {
-                await onChoose(classId, day, slot.start, slot.end);
+                await onChoose(
+                  classId,
+                  day,
+                  selectedSlot.start,
+                  selectedSlot.end,
+                );
               } finally {
                 setBusy(false);
               }
