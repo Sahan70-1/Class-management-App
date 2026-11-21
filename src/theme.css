@@ -1,0 +1,130 @@
+:root {
+  --device-badge-bg: #dbeefc;
+  --device-badge-ink: #174464;
+}
+
+.sidebar { overflow-y: auto; }
+
+.theme-switch {
+  margin: 0 3px 18px;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.theme-switch legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
+  gap: 3px;
+  border-radius: 18px;
+  background: var(--page);
+}
+.theme-options label { position: relative; cursor: pointer; }
+.theme-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+.theme-options span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 44px;
+  border-radius: 15px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.theme-options input:checked + span {
+  color: var(--chip-ink);
+  background: var(--light-green);
+  font-weight: 700;
+}
+.theme-options input:focus-visible + span {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+@media (forced-colors: active) {
+  .theme-options input:checked + span { border: 2px solid Highlight; }
+}
+
+/* Screen-only colors leave the printable QR card and reports on light paper. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #131b18;
+    --white: #212e27;
+    --ink: #edf5ee;
+    --muted: #bbc9c0;
+    --track: #405047;
+    --green: #99d6af;
+    --light-green: #2d483a;
+    --chip-ink: #bdedcd;
+    --butter: #564927;
+    --lilac: #413c54;
+    --peach: #533d35;
+    --device-badge-bg: #cce8fa;
+  }
+
+  /* These surfaces use an inverted palette in the light design. */
+  [data-theme="dark"] .welcome-banner {
+    background: #294938;
+    color: var(--ink);
+  }
+  [data-theme="dark"] .welcome-content h2 { color: var(--ink); }
+  [data-theme="dark"] .welcome-label {
+    background: var(--white);
+    color: var(--chip-ink);
+  }
+  [data-theme="dark"] .welcome-content .button {
+    background: #f0d58c;
+    color: #302915;
+  }
+  [data-theme="dark"] .bottom-nav {
+    background: var(--white);
+    box-shadow: inset 0 0 0 1px var(--track);
+  }
+  [data-theme="dark"] .bottom-nav button { color: var(--muted); }
+  [data-theme="dark"] .bottom-nav button.active {
+    background: #f0d58c;
+    color: #302915;
+  }
+  [data-theme="dark"] .bottom-nav button:focus-visible { outline-color: var(--green); }
+
+  [data-theme="dark"] .scanner-window {
+    background: #182d24;
+  }
+  [data-theme="dark"] :is(.scanner-placeholder p, .scanner-bottom, .scanner-bottom button) {
+    color: var(--ink);
+  }
+  [data-theme="dark"] .scanner-window.is-active .scanner-bottom {
+    background: linear-gradient(transparent, rgb(0 0 0 / 80%));
+    color: #fff;
+  }
+  [data-theme="dark"] .scanner-corners i { border-color: #f0d58c; }
+  [data-theme="dark"] .qr-sample { color: #f0d58c; }
+
+  [data-theme="dark"] .qr-canvas {
+    background: #fff;
+    --ink: #14201a;
+    --muted: #5a645e;
+  }
+  [data-theme="dark"] .modal::backdrop,
+  [data-theme="dark"] .mobile-scrim { background: rgb(0 0 0 / 58%); }
+
+  [data-theme="dark"] .form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    border-color: #6b7d70;
+  }
+}

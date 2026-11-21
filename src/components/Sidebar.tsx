@@ -1,29 +1,35 @@
 import {
-  Cloud as CloudCheck,
-  Ellipsis,
+  CalendarDays,
   GraduationCap,
-  Settings,
+  History,
+  Sun,
+  Moon,
+  Cloud as CloudCheck,
 } from "lucide-react";
-import React from "react";
-import { type Role, type Student } from "../model";
-import { nav, type Tab } from "../navigation";
-import { Badge } from "./Badge";
-import { Icon } from "./Icon";
+import { useEffect, useState } from "react";
+import { applyTheme, readTheme, saveTheme, THEME_STORAGE_KEY } from "../theme";
+
 export function Sidebar({
   mobileMenu,
-  navigate,
-  tab,
-  students,
-  setModal,
-  role,
+  open,
+  goHome,
 }: {
   mobileMenu: boolean;
-  navigate: (t: Tab) => void;
-  tab: Tab;
-  students: Student[];
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
-  role: Role;
+  open: (section: "classes" | "activity" | "calendar") => void;
+  goHome: () => void;
 }) {
+  const [theme, setTheme] = useState(readTheme);
+  useEffect(() => {
+    function syncAppearance(event?: StorageEvent) {
+      if (event && event.key !== null && event.key !== THEME_STORAGE_KEY) return;
+      const saved = readTheme();
+      applyTheme(saved);
+      setTheme(saved);
+    }
+    syncAppearance();
+    window.addEventListener("storage", syncAppearance);
+    return () => window.removeEventListener("storage", syncAppearance);
+  }, []);
   return (
     <aside className={"sidebar " + (mobileMenu ? "mobile-open" : "")}>
       <a
@@ -31,7 +37,7 @@ export function Sidebar({
         className="brand"
         onClick={(e) => {
           e.preventDefault();
-          navigate("Today");
+          goHome();
         }}
       >
         <span className="brand-mark">
@@ -50,20 +56,16 @@ export function Sidebar({
           <span>Mathematics academy</span>
         </div>
       </div>
-      <div className="nav-label">WORKSPACE</div>
-      <nav className="main-nav">
-        {nav.map(({ name, icon }) => (
-          <button
-            key={name}
-            className={tab === name ? "active" : ""}
-            onClick={() => navigate(name)}
-          >
-            <Icon icon={icon} />
-            <span>{name}</span>
-            {tab === name && <span className="active-dot" />}
-            {name === "Students" && <small>{students.length}</small>}
-          </button>
-        ))}
+      <nav className="main-nav" aria-label="Teaching tools">
+        <button onClick={() => open("classes")}>
+          <GraduationCap size={20} /> Your classes
+        </button>
+        <button onClick={() => open("activity")}>
+          <History size={20} /> Recent activity
+        </button>
+        <button onClick={() => open("calendar")}>
+          <CalendarDays size={20} /> Calendar
+        </button>
       </nav>
       <div className="sidebar-bottom">
         <div className="offline-note">
@@ -80,32 +82,32 @@ export function Sidebar({
             <i /> Saved on this device
           </span>
         </div>
-        <button
-          className="sidebar-settings"
-          onClick={() => setModal("settings")}
-        >
-          <Settings size={18} /> Workspace settings
-        </button>
-        <div className="tutor">
-          <span className="tutor-avatar">T</span>
-          <div>
-            <strong>My workspace</strong>
-            <span>
-              {role === "admin"
-                ? "Tutor · Admin"
-                : role === "staff"
-                  ? "Attendance staff"
-                  : "Reports · Read only"}
-            </span>
+        <fieldset className="theme-switch">
+          <legend>Appearance</legend>
+          <div className="theme-options">
+            {(["light", "dark"] as const).map((choice) => {
+              const Icon = choice === "light" ? Sun : Moon;
+              return (
+                <label key={choice}>
+                  <input
+                    type="radio"
+                    name="appearance"
+                    value={choice}
+                    checked={theme === choice}
+                    onChange={() => {
+                      saveTheme(choice);
+                      setTheme(choice);
+                    }}
+                  />
+                  <span>
+                    <Icon aria-hidden="true" size={16} />
+                    {choice === "light" ? "Light" : "Dark"}
+                  </span>
+                </label>
+              );
+            })}
           </div>
-          <button
-            aria-label="Account and roles"
-            className="icon-button"
-            onClick={() => setModal("settings")}
-          >
-            <Ellipsis size={20} />
-          </button>
-        </div>
+        </fieldset>
       </div>
     </aside>
   );

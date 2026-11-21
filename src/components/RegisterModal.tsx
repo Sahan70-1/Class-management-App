@@ -1,3 +1,4 @@
+import { squarePhoto } from "../profilePhoto";
 import { classGrade } from "../model";
 import { ArrowRight, Camera, Info } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
@@ -27,32 +28,15 @@ export function RegisterModal({
     [saving, setSaving] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   async function addPhoto(f: File) {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) {
-      setError("Choose a JPEG, PNG or WebP image.");
-      return;
-    }
     try {
-      const image = await createImageBitmap(f);
-      const c = document.createElement("canvas");
-      c.width = c.height = 256;
-      const ctx = c.getContext("2d")!;
-      const side = Math.min(image.width, image.height);
-      ctx.drawImage(
-        image,
-        (image.width - side) / 2,
-        (image.height - side) / 2,
-        side,
-        side,
-        0,
-        0,
-        256,
-        256,
-      );
-      setPhoto(c.toDataURL("image/jpeg", 0.8));
-      image.close();
+      setPhoto(await squarePhoto(f, 256));
       setError("");
-    } catch {
-      setError("This photo could not be read.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "This photo could not be read.",
+      );
     }
   }
   async function submit(e: FormEvent) {

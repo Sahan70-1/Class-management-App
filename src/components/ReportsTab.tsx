@@ -261,7 +261,15 @@ export function ReportsTab({
                               </Badge>
                             )}
                           </td>
-                          <td>
+                          <td className="report-detail">
+                            <span className="mobile-detail-label">
+                              {reportType === "attendance"
+                                ? "Latest check-in"
+                                : reportType === "fees"
+                                  ? "Amount"
+                                  : "Lesson title"}{" "}
+                              ·{" "}
+                            </span>
                             {reportType === "attendance"
                               ? attended[0]
                                 ? shortDate(attended[0].date)

@@ -24,7 +24,13 @@ test('offline action is durable, independent, retained on failure, and acknowled
  await store.mutate('schedules',{id:'staff-schedule',classId:'staff-class',versions:[{from:day,weekday:1,start:'08:00',end:'10:00'}]},'staff');
  await store.mutate('overrides',{id:'staff-schedule@'+day,scheduleId:'staff-schedule',date:day,start:'09:00',end:'11:00',cancelled:false},'staff');
  await store.mutate('tutes',{id:'staff-class@'+day.slice(0,7),classId:'staff-class',month:day.slice(0,7),title:'New lesson'},'staff');
- assert.equal(await db.count('outbox'),5);
+ const avatar={id:'staff@example.com',photo:'data:image/jpeg;base64,/9j/2Q=='};
+ await store.mutate('profiles',avatar,'staff');
+ await assert.rejects(()=>store.mutate('profiles',{...avatar,id:'other@example.com'},'staff'),/own profile/);
+ const lesson={id:'staff-class@'+day.slice(0,7),classId:'staff-class',month:day.slice(0,7),title:'New lesson',deleted:true};
+ await store.mutate('tutes',lesson,'staff');
+ await assert.rejects(()=>store.mutate('issues',{id:'S-STAFF@'+lesson.id,studentId:'S-STAFF',tuteId:lesson.id,at:day},'staff'),/deleted/);
+ assert.equal(await db.count('outbox'),7);
  assert.equal((await db.get('records','classes:staff-class')).value.grade,'8');
  const pending=await db.getAll('outbox');assert.equal(pending.every(o=>o.actor==='staff@example.com'),true);
  await assert.rejects(()=>store.mutate('classes',{id:'bad-class',grade:'8',name:'Bad fee',fee:-1,subject:'Maths',room:'Main',color:'teal'},'staff'),/fee/);
@@ -66,5 +72,33 @@ test('offline action is durable, independent, retained on failure, and acknowled
  const removal=(await db.getAll('outbox'))[0];respond([{entity:'students',key:removed.id,value:removed,revision:pupil.revision+1}],6,{accepted:[removal.id],role:'admin',email:'tutor@local.demo'});
  (navigator as any).onLine=true;await store.sync();assert.equal(sent.lastSeq,5);assert.equal(sent.operations.length,1);assert.equal(await db.count('outbox'),0);assert.equal(await db.get('meta','lastSeq'),6);
  assert.deepEqual((await db.getAll('records')).filter(r=>['attendance','fees','issues'].includes(r.entity)),history);
+ // A revoked membership stays locked offline. Pending work belongs to its author.
+ const stableDevice=await db.get('meta','installationId');
+ assert.match(stableDevice,/^[0-9a-f-]{36}$/i);
+ (navigator as any).onLine=false;
+ await store.mutate('profiles',{id:'tutor@local.demo',photo:''},'admin');
+ let headers:Headers;
+ (navigator as any).onLine=true;
+ globalThis.fetch=async(_input,init)=>{
+   headers=new Headers(init?.headers);
+   return Response.json({code:'NOT_A_WORKSPACE_MEMBER'}, {status:403});
+ };
+ await store.sync();
+ assert.equal(headers!.get('X-Classroom-Device'),stableDevice);
+ assert.equal(headers!.get('X-Classroom-Account'),'tutor@local.demo');
+ assert.equal(store.getSnapshot().records.length,0);
+ assert.equal(await db.count('outbox'),1);
+ (navigator as any).onLine=false;
+ await store.initialize();
+ assert.match(store.getSnapshot().accessMessage!,/does not have access/);
+ await assert.rejects(()=>store.mutate('profiles',{id:'tutor@local.demo',photo:''},'admin'),/access/);
+ (navigator as any).onLine=true;
+ globalThis.fetch=async()=>Response.json({code:'WORKSPACE_ACCOUNT_CHANGED'}, {status:409});
+ await store.sync();assert.match(store.getSnapshot().accessMessage!,/tutor@local.demo/);
+ assert.equal(await db.count('outbox'),1);
+ const [savedPhoto]=await db.getAll('outbox');
+ respond([],7,{accepted:[savedPhoto.id],role:'admin',email:'tutor@local.demo'});await store.sync();
+ assert.equal(store.getSnapshot().accessMessage,null);assert.ok(store.getSnapshot().records.length);
+ assert.equal(await db.count('outbox'),0);assert.equal(await db.get('meta','installationId'),stableDevice);
  db.close();globalThis.setInterval=interval;
 });

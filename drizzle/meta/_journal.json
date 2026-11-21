@@ -8,6 +8,13 @@
       "when": 1794150670314,
       "tag": "0000_amazing_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795278099636,
+      "tag": "0001_member_devices",
+      "breakpoints": true
     }
   ]
 }

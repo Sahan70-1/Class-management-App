@@ -1,3 +1,5 @@
+import type { SetDialog } from "../navigation";
+import { MemberAvatar } from "./MemberAvatar";
 import {
   Bell,
   ChevronRight,
@@ -11,15 +13,17 @@ import { type Tab } from "../navigation";
 import { type StoreState } from "../store";
 import { Icon } from "./Icon";
 export function Topbar({
+  photo,
   setMobileMenu,
   tab,
   data,
   setModal,
 }: {
+  photo?: string;
   setMobileMenu: React.Dispatch<React.SetStateAction<boolean>>;
   tab: Tab;
   data: StoreState;
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
 }) {
   return (
     <header className="topbar">
@@ -77,7 +81,7 @@ export function Topbar({
           aria-label="Workspace settings"
           onClick={() => setModal("settings")}
         >
-          {data.email?.charAt(0).toUpperCase() || "T"}
+          <MemberAvatar email={data.email} photo={photo} />
         </button>
       </div>
     </header>

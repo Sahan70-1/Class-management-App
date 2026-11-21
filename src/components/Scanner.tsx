@@ -34,12 +34,27 @@ export function Scanner({
           video.current.srcObject = s;
           void video.current.play();
         }
-        function scan() {
+        // Decode at most eight fresh frames per second. Keep the camera's
+        // native resolution for small QR cards and let the preview run freely.
+        let nextDecode = 0;
+        let lastVideoTime = -1;
+        function scan(now: number) {
           if (stopped) return;
-          if (video.current?.readyState === 4) {
-            canvas.width = video.current.videoWidth;
-            canvas.height = video.current.videoHeight;
-            ctx.drawImage(video.current, 0, 0);
+          const source = video.current;
+          if (
+            source &&
+            source.readyState >= 2 &&
+            now >= nextDecode &&
+            source.currentTime !== lastVideoTime &&
+            source.videoWidth &&
+            source.videoHeight
+          ) {
+            lastVideoTime = source.currentTime;
+            if (canvas.width !== source.videoWidth)
+              canvas.width = source.videoWidth;
+            if (canvas.height !== source.videoHeight)
+              canvas.height = source.videoHeight;
+            ctx.drawImage(source, 0, 0);
             const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(image.data, image.width, image.height);
             if (code) {
@@ -47,6 +62,7 @@ export function Scanner({
               setActive(false);
               return;
             }
+            nextDecode = performance.now() + 125;
           }
           frame = requestAnimationFrame(scan);
         }

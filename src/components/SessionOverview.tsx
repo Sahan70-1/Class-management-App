@@ -55,6 +55,21 @@ export function SessionOverview({
           <span>Not marked</span>
         </div>
       </div>
+      {session.cancelled && (
+        <p className="form-hint">
+          Scanning is unavailable for this cancelled session. Open a scheduled
+          class to check students in.
+        </p>
+      )}
+      {role !== "viewer" && (
+        <button
+          className="button primary full overview-start"
+          onClick={onStart}
+          disabled={session.cancelled}
+        >
+          Start scanning
+        </button>
+      )}
       <h3 className="spaced-title">Attendance list</h3>
       <div className="overview-roster">
         {summary.rows.map(({ student, present }) => (
@@ -76,21 +91,6 @@ export function SessionOverview({
           </p>
         )}
       </div>
-      {session.cancelled && (
-        <p className="form-hint">
-          Scanning is unavailable for this cancelled session. Open a scheduled
-          class to check students in.
-        </p>
-      )}
-      {role !== "viewer" && (
-        <button
-          className="button primary full overview-start"
-          onClick={onStart}
-          disabled={session.cancelled}
-        >
-          Start scanning
-        </button>
-      )}
     </section>
   );
 }

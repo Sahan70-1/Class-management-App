@@ -37,6 +37,9 @@
 body {
   margin: 0;
 }
+body:has(dialog[open]) {
+  overflow: hidden;
+}
 button,
 input,
 select,
@@ -5677,8 +5680,9 @@ input[type="radio"] {
   background: var(--track);
   color: var(--muted);
 }
+/* Native date and month pickers need a full row in narrow dialogs. */
 .form-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   gap: 12px;
 }
 .form-hint,
@@ -6192,4 +6196,224 @@ input[type="radio"] {
   justify-items: start;
   padding: 16px 20px;
   margin-bottom: 16px;
+}
+
+.member-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--light-green);
+  color: var(--chip-ink);
+  font-weight: 700;
+}
+.member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.account-avatar { padding: 0; overflow: hidden; }
+.account-avatar .member-avatar { width: 100%; height: 100%; }
+.profile-photo-field input { width: 100%; max-width: 100%; }
+.history-row > div { min-width: 0; overflow-wrap: anywhere; }
+.tute-confirm { display: grid; }
+.tute-confirm p { margin: 0; }
+.tute-confirm > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.mobile-detail-label { display: none; }
+@media screen and (min-width: 761px) {
+  .bottom-nav {
+    display: flex; position: fixed; bottom: 16px; left: calc(50% + 105px);
+    transform: translateX(-50%); z-index: 40; padding: 6px;
+    width: max-content; max-width: calc(100vw - 230px);
+    gap: 4px; border-radius: 32px; background: var(--ink);
+  }
+  .bottom-nav button {
+    display: flex; align-items: center; gap: 8px; padding: 12px 18px;
+    border-radius: 24px; color: var(--white);
+  }
+  .bottom-nav button.active { color: var(--ink); background: var(--butter); }
+  .toast { bottom: 86px; }
+}
+.report-panel { container-type: inline-size; }
+@container (max-width: 700px) {
+  .report-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; padding: 0 8px; }
+  .report-tabs > button { white-space: normal; justify-content: center; line-height: 1.25; }
+  .report-panel .table-scroll { overflow: visible; }
+  .report-panel table, .report-panel tbody { display: block; min-width: 0; width: 100%; }
+  .report-panel thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  .report-panel tbody tr {
+    display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 8px;
+    padding: 12px 16px; border-bottom: 1px solid var(--track);
+  }
+  .report-panel td, .report-panel td:first-child {
+    display: block; min-width: 0; max-width: none; width: auto; position: static;
+    padding: 0; border: 0; white-space: normal; overflow-wrap: anywhere;
+  }
+  .report-panel td:nth-child(2) { grid-row: 2; font-size: 12px; color: var(--muted); }
+  .report-panel td:nth-child(3) { grid-column: 2; grid-row: 1; align-self: center; }
+  .report-panel .report-detail { grid-column: 1/-1; font-size: 13px; }
+  .mobile-detail-label { display: inline; color: var(--muted); }
+  .report-panel .student-cell { min-width: 0; }
+}
+.report-stats .stat-value { overflow-wrap: anywhere; }
+.tute-catalog ul {
+  list-style: none;
+  margin: 8px 0 0; padding: 3px;
+}
+.tute-catalog button {
+  display: grid; gap: 3px; width: 100%; text-align: start;
+  padding: 10px 12px; border-radius: 12px; overflow-wrap: anywhere;
+}
+.tute-catalog button[aria-pressed="true"] { background: var(--light-green); }
+.tute-catalog small { color: var(--muted); }
+
+.modal {
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  overflow-wrap: anywhere;
+}
+.modal-body { display: contents; }
+.slot-picker { display: none; }
+.form :is(label, select, input, textarea, fieldset),
+.modal-heading > div,
+.checkin-person > div,
+.checkin-status > div > span:not(.badge) {
+  min-inline-size: 0;
+}
+.form :is(input, select, textarea, .button),
+.modal-action-row > button {
+  max-inline-size: 100%;
+}
+.tute-manager { gap: 0.875rem; }
+.tute-manager details {
+  min-inline-size: 0;
+  border-block-start: 1px solid var(--track);
+}
+.tute-manager summary {
+  cursor: pointer;
+  padding-block: 12px;
+  min-height: 44px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.tute-manager summary span {
+  color: var(--muted);
+  font-weight: 400;
+}
+.tute-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tute-catalog button {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tute-roster > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+@media (max-width: 760px) {
+  .class-footer, .page-heading-actions, .page-heading {
+    flex-wrap: wrap;
+  }
+  .checkin-actions > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  }
+  .class-name, .checkin-person h2, .checkin-status small {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media screen and (max-width: 760px),
+  screen and (pointer: coarse) and (max-width: 1024px) {
+  /* Keep the card's top edge still when changing a date or opening a list. */
+  .modal[open] {
+    --card-top: max(clamp(12px, 4svh, 32px), env(safe-area-inset-top));
+    --card-bottom: max(12px, env(safe-area-inset-bottom));
+    --card-left: max(12px, env(safe-area-inset-left));
+    --card-right: max(12px, env(safe-area-inset-right));
+    position: fixed;
+    inset: var(--card-top) var(--card-right) auto var(--card-left);
+    margin: 0 auto;
+    padding: 0;
+    width: calc(100% - var(--card-left) - var(--card-right));
+    height: auto;
+    max-height: calc(100dvh - var(--card-top) - var(--card-bottom));
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  html:has(dialog[open]) {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .modal::backdrop, .modal-heading {
+    touch-action: pinch-zoom;
+  }
+  .modal-heading {
+    flex: none;
+    margin: 0;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--track);
+  }
+  .modal-body {
+    display: block;
+    min-inline-size: 0;
+    min-block-size: 0;
+    padding: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    touch-action: pan-y pinch-zoom;
+  }
+  .modal-body :is(.form, .form-grid, .class-name, .qr-profile > div, .profile-header > div) {
+    min-inline-size: 0;
+  }
+  .modal-body :is(select, input, textarea, img, canvas) {
+    max-inline-size: 100%;
+  }
+  .slot-list { display: none; }
+  .slot-picker { display: block; }
+  .overview-roster {
+    max-height: none;
+    overflow: visible;
+  }
+  .attendance-days {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.25rem), 1fr));
+    overflow: visible;
+  }
+  .attendance-days > div { min-width: 0; }
+  .scanner-search input, .search-input input, .scan-class-select :is(select, input), .filter-select select {
+    min-inline-size: 0;
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  body:has(.sidebar.mobile-open) { overflow: hidden; }
+  .sidebar.mobile-open {
+    max-width: 100%;
+    overscroll-behavior: contain;
+    padding-top: max(26px, env(safe-area-inset-top));
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: max(19px, env(safe-area-inset-left));
+  }
+  .mobile-scrim { touch-action: none; }
+  .scan-class-select input {
+    width: calc(100% - 28px);
+  }
+  .week-strip > .icon-button:last-child { justify-self: end; }
+  .topbar {
+    height: calc(60px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  }
+  .class-tools {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
 }

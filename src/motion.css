@@ -1,0 +1,62 @@
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --interaction-ease: cubic-bezier(0.25, 0.65, 0.35, 1);
+  }
+
+  .main-shell > main,
+  .modal[open],
+  .sidebar.mobile-open,
+  .toast,
+  .checkin-card {
+    animation: surface-appear 220ms var(--interaction-ease);
+  }
+
+  @keyframes surface-appear {
+    from {
+      opacity: 0.65;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .modal[open]::backdrop,
+  .mobile-scrim {
+    animation: backdrop-appear 200ms ease-out;
+  }
+
+  @keyframes backdrop-appear {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .button,
+  .icon-button,
+  .main-nav button,
+  .bottom-nav button {
+    transition:
+      background-color 180ms var(--interaction-ease),
+      border-color 180ms var(--interaction-ease),
+      color 180ms var(--interaction-ease),
+      opacity 150ms var(--interaction-ease);
+  }
+
+  .spinning {
+    animation-delay: 160ms;
+  }
+}
+
+/* Give touch feedback without moving controls under the user's finger. */
+@media (pointer: coarse) {
+  .button:enabled:active,
+  .icon-button:enabled:active,
+  .main-nav button:enabled:active,
+  .bottom-nav button:enabled:active {
+    opacity: 0.86;
+    transition-duration: 65ms;
+  }
+}

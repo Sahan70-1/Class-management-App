@@ -87,6 +87,35 @@ test('sync persists independent actions, retries safely, protects roles, and rej
   const result=(await request('/api/sync',{operations:[op('classes',{...group,...fields,id:crypto.randomUUID()})]},staff)).body;assert.equal(result.accepted.length,0);assert.equal(result.conflicts.length,1);
  }
  const viewer=(await request('/api/sync',{operations:batch.map(o=>({...o,id:crypto.randomUUID()}))},'viewer@example.com')).body;assert.equal(viewer.accepted.length,0);assert.equal(viewer.conflicts.length,4);
+ // A deleted title keeps its monthly issue history and can be restored.
+ const issue={id:pupil.id+'@'+lesson.id,studentId:pupil.id,tuteId:lesson.id,at:new Date().toISOString()};
+ assert.equal((await request('/api/sync',{operations:[op('issues',issue)]},staff)).body.conflicts.length,0);
+ const deletion=op('tutes',{...lesson,deleted:true},2);
+ assert.equal((await request('/api/sync',{operations:[deletion]},'viewer@example.com')).body.accepted.length,0);
+ const removedTitle=(await request('/api/sync',{operations:[deletion],lastSeq:0},staff)).body;
+ assert.deepEqual(removedTitle.accepted,[deletion.id]);
+ assert.ok(removedTitle.records.some((r:any)=>r.key===issue.id));
+ const other={...pupil,id:'S-OTHER'};
+ const blocked=(await request('/api/sync',{operations:[op('students',other),op('issues',{...issue,id:other.id+'@'+lesson.id,studentId:other.id})]},staff)).body;
+ assert.match(blocked.conflicts[0].message,/deleted/);
+ assert.equal((await request('/api/sync',{operations:[op('tutes',lesson,3)]},staff)).body.conflicts.length,0);
+
+ // All signed-in roles can update their own avatar. Activity uses the authenticated actor.
+ for(const owner of ['tutor@local.demo',staff,'viewer@example.com']) {
+   const picture={id:owner,photo:'data:image/jpeg;base64,/9j/2Q=='};
+   const change=op('profiles',picture);
+   const before=(await request('/api/sync',{operations:[]})).body.lastSeq;
+   const applied=(await request('/api/sync',{operations:[change],includeProfiles:true},owner)).body;
+   assert.deepEqual(applied.accepted,[change.id]);
+   assert.equal(applied.history.find((h:any)=>h.id===change.id).actor,owner);
+   const delta=(await request('/api/sync',{operations:[],lastSeq:before,includeProfiles:true},staff)).body;
+   assert.deepEqual(delta.records.map((r:any)=>r.value),[picture]);
+   const spoof=op('profiles',{...picture,id:'other@example.com'});
+   assert.match((await request('/api/sync',{operations:[spoof]},owner)).body.conflicts[0].message,/own profile/);
+ }
+ const legacy=(await request('/api/sync',{operations:[]})).body;
+ assert.ok(legacy.records.every((r:any)=>r.entity!=='profiles'));
+
  }
  }finally{await mf.dispose();}
 });

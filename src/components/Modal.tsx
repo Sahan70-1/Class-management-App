@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 
 export function Modal({
   title,
@@ -15,26 +15,45 @@ export function Modal({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    ref.current?.showModal();
-    const old = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = old;
-    };
+  const titleId = useId();
+  const backdropPressed = useRef(false);
+  useLayoutEffect(() => {
+    const dialog = ref.current!;
+    dialog.showModal();
+    return () => dialog.close();
   }, []);
+  function outsidePanel(x: number, y: number) {
+    const rect = ref.current!.getBoundingClientRect();
+    return x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom;
+  }
   return (
     <dialog
       className={"modal " + (wide ? "wide" : "")}
       ref={ref}
-      onCancel={onClose}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        onClose();
+      }}
+      onPointerDown={(event) => {
+        backdropPressed.current =
+          event.target === ref.current &&
+          outsidePanel(event.clientX, event.clientY);
+      }}
       onClick={(e) => {
-        if (e.target === ref.current) onClose();
+        if (
+          backdropPressed.current &&
+          e.target === ref.current &&
+          outsidePanel(e.clientX, e.clientY)
+        )
+          onClose();
+        backdropPressed.current = false;
       }}
     >
       <div className="modal-heading">
         <div>
-          <h2>{title}</h2>
+          <h2 id={titleId}>{title}</h2>
           {subtitle && <p>{subtitle}</p>}
         </div>
         <button
@@ -45,7 +64,7 @@ export function Modal({
           <X size={20} />
         </button>
       </div>
-      {children}
+      <div className="modal-body">{children}</div>
     </dialog>
   );
 }

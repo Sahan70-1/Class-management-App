@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { CalendarClock, History as HistoryIcon } from "lucide-react";
 import React from "react";
 import { type Entity } from "../model";
@@ -6,7 +7,7 @@ export function ScheduleHistoryDialog({
   setModal,
   changeHistory,
 }: {
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   changeHistory: {
     id: string;
     at: string;

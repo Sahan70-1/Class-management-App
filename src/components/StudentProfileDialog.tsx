@@ -1,3 +1,4 @@
+import type { SetDialog } from "../navigation";
 import { ScanLine, UserRound } from "lucide-react";
 import React, { useState } from "react";
 import { useStudentRemoval } from "../useStudentRemoval";
@@ -23,7 +24,7 @@ export function StudentProfileDialog({
   issues,
   role,
 }: {
-  setModal: React.Dispatch<React.SetStateAction<string | null>>;
+  setModal: SetDialog;
   student: Student;
   classes: ClassGroup[];
   attendance: Attendance[];
