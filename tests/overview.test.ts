@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createElement} from 'react';
+import {Children,createElement,isValidElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {SessionOverview} from '../src/components/SessionOverview';
 import {ClassForm} from '../src/components/ClassForm';
@@ -20,7 +20,12 @@ test('overview isolates the selected session and retains students already marked
 test('overview scanning is an explicit action and unavailable for viewers or cancelled sessions',()=>{
  let starts=0;const props={session,group,students,attendance:[],role:'staff' as const,onStart:()=>{starts++;}};
  const tree=SessionOverview(props);assert.equal(starts,0);
- const button=(tree.props as any).children.at(-1);button.props.onClick();assert.equal(starts,1);
+ const button=Children.toArray(tree.props.children).find(child=>
+   isValidElement<{children:string}>(child) && child.type==='button' && child.props.children==='Start scanning'
+ );
+ assert.ok(isValidElement<{onClick:()=>void;disabled:boolean}>(button));
+ assert.equal(button.props.disabled,false);
+ button.props.onClick();assert.equal(starts,1);
  assert.equal(renderToStaticMarkup(createElement(SessionOverview,{...props,role:'viewer'})).includes('Start scanning'),false);
  assert.match(renderToStaticMarkup(createElement(SessionOverview,{...props,session:{...session,cancelled:true}})),/disabled=""/);
  assert.equal(sessionRoster(session,[],[]).total,0);
