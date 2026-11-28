@@ -37,7 +37,6 @@ import {
   weekday,
   type Entity,
   type EntityMap,
-  type Role,
   type Session,
   type Student,
 } from "./model";
@@ -60,7 +59,6 @@ export function App() {
     [reportClass, setReportClass] = useState("grade-9"),
     [reportMonth, setReportMonth] = useState(monthOf(today)),
     [reportType, setReportType] = useState("attendance"),
-    [previewRole, setPreviewRole] = useState<Role>("admin"),
     [toast, setToast] = useState(""),
     [mobileMenu, setMobileMenu] = useState(false);
   const modal = dialogPath.at(-1);
@@ -92,14 +90,7 @@ export function App() {
       if (latest) setStudent(latest);
     }
   }, [data.records, student?.id]);
-  const role: Role =
-    data.role === "viewer"
-      ? "viewer"
-      : data.role === "staff"
-        ? previewRole === "viewer"
-          ? "viewer"
-          : "staff"
-        : previewRole;
+  const role = data.role;
   const sessions = sessionsFor(date, schedules, overrides),
     activeSession =
       sessions.find((s) => s.id === selected) ||
@@ -133,9 +124,6 @@ export function App() {
       return () => clearTimeout(t);
     }
   }, [toast]);
-  useEffect(() => {
-    if (data.role !== "admin") setPreviewRole(data.role);
-  }, [data.role]);
   useEffect(() => {
     if (data.accessMessage) {
       setDialogPath([]);
@@ -472,10 +460,8 @@ export function App() {
             await mutate("profiles", { id: data.email, photo }, role);
             setToast("Profile picture updated");
           }}
-          actualRole={data.role}
-          role={previewRole}
+          role={role}
           email={data.email}
-          onRole={setPreviewRole}
           onClose={() => setModal(null)}
           notify={setToast}
         />

@@ -90,7 +90,7 @@ The tutor opens **Your teaching space → Workspace members → Add member** to 
 | Attendance staff | Register new students; add/edit classes, timetables and tute titles; record attendance, fees and tute issues; view reports. Cannot edit existing students or remove/restore them. |
 | Read-only viewer | Read records, view and export reports; no mutations |
 
-The admin role preview only reduces UI permissions; it cannot grant a staff/viewer account additional server permissions. Hosted requests require the Sites-authenticated email header and an existing membership. API responses are not cached. No external messages or payment processing are performed.
+Your teaching space shows the signed-in email and its assigned workspace role. Hosted requests require the Sites-authenticated email header and an existing membership. API responses are not cached. No external messages or payment processing are performed.
 
 The deployment target is a Cloudflare Worker module (`dist/server/index.js`) with static client assets (`dist/client`), D1 binding `DB`, and the checked-in schema migration. `.openai/hosting.json` preserves this Site's identity. `wrangler.jsonc` is for local development; use Sites for hosted configuration and migration application.
 
@@ -133,7 +133,7 @@ The member directory shows the browser and operating system observed on each ins
 
 ## Removing a student
 
-Only admins can remove a student from their profile after confirming the student's name. Removal stores `removedAt` and the signed-in admin's `removedBy` on the student; no student or attendance, fee, or tute-issue record is deleted. Admins can enable **Show removed students** in Students and choose **Restore**. Editing other details preserves removal status. Staff and viewers cannot remove, restore, or register a student with removal metadata. Server membership, rather than the UI role preview, controls permission.
+Only admins can remove a student from their profile after confirming the student's name. Removal stores `removedAt` and the signed-in admin's `removedBy` on the student; no student or attendance, fee, or tute-issue record is deleted. Admins can enable **Show removed students** in Students and choose **Restore**. Editing other details preserves removal status. Staff and viewers cannot remove, restore, or register a student with removal metadata. The server enforces the assigned membership role.
 
 Removed students disappear from active directories, check-in search, rosters, session overviews and active counts. Scanning their QR shows “This student has been removed”; new attendance, payments and tute issues are rejected until restoration. Existing historical records remain readable and retryable. Current-month report lists exclude removed pupils, while past lists and financial/attendance/tute totals retain history. CSV exports include removed pupils with records for the selected period and label their status **Removed**, retaining formula-prefix escaping.
 

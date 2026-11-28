@@ -7,24 +7,20 @@ import { Modal } from "./Modal";
 export function SettingsModal({
   photo,
   savePhoto,
-  actualRole,
   role,
   email,
-  onRole,
   onClose,
   notify,
 }: {
   photo?: string;
   savePhoto: (photo: string) => Promise<void>;
-  actualRole: Role;
   role: Role;
   email: string;
-  onRole: (role: Role) => void;
   onClose: () => void;
   notify: (message: string) => void;
 }) {
   const [showMembers, setShowMembers] = useState(false);
-  const canManageMembers = actualRole === "admin" && role === "admin";
+  const canManageMembers = role === "admin" && email.includes("@");
   useEffect(() => {
     if (!canManageMembers) setShowMembers(false);
   }, [canManageMembers]);
@@ -45,9 +41,9 @@ export function SettingsModal({
           <div>
             <strong>{email}</strong>
             <p>
-              {actualRole === "admin"
+              {role === "admin"
                 ? "Tutor · Administrator"
-                : actualRole === "staff"
+                : role === "staff"
                   ? "Attendance staff"
                   : "Reports viewer"}
             </p>
@@ -55,32 +51,11 @@ export function SettingsModal({
           <ShieldCheck size={20} />
         </div>
         <div className="form">
-          {actualRole === "admin" && (
-            <>
-              <label>
-                Preview a role
-                <select
-                  value={role}
-                  onChange={(e) => onRole(e.target.value as Role)}
-                >
-                  <option value="admin">Tutor / admin</option>
-                  <option value="staff">Attendance staff</option>
-                  <option value="viewer">Read-only reports viewer</option>
-                </select>
-                <span className="form-hint">
-                  Preview only. Actual permissions are enforced by the server.
-                </span>
-              </label>
-              {canManageMembers && (
-                <button
-                  className="button white"
-                  onClick={() => setShowMembers(true)}
-                >
-                  <Users size={18} />
-                  Workspace members
-                </button>
-              )}
-            </>
+          {canManageMembers && (
+            <button className="button white" onClick={() => setShowMembers(true)}>
+              <Users size={18} />
+              Workspace members
+            </button>
           )}
           <div className="callout">
             <Download size={18} />

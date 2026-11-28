@@ -7,26 +7,17 @@ import { WorkspaceMemberList } from "../src/components/WorkspaceMembersDialog";
 import type { Role } from "../src/model";
 const noop = () => {};
 
-test("member directory entry requires both authenticated and preview admin roles", () => {
-  for (const actualRole of ["admin", "staff", "viewer"] as Role[]) {
-    for (const role of ["admin", "staff", "viewer"] as Role[]) {
-      const html = renderToStaticMarkup(
-        createElement(SettingsModal, {
-          actualRole,
-          role,
-          email: "tutor@example.com",
-          onClose: noop,
-          onRole: noop,
-          notify: noop,
-          savePhoto: async () => {},
-        }),
-      );
-      assert.equal(
-        html.includes("Workspace members"),
-        actualRole === "admin" && role === "admin",
-      );
-      assert.ok(!html.includes("Member email"));
-    }
+test("teaching space shows the account identity and reserves membership for admins", () => {
+  const labels = { admin: "Tutor · Administrator", staff: "Attendance staff", viewer: "Reports viewer" };
+  for (const role of Object.keys(labels) as Role[]) {
+    const email = role + "@example.com";
+    const html = renderToStaticMarkup(createElement(SettingsModal, {
+      role, email, onClose: noop, notify: noop, savePhoto: async () => {},
+    }));
+    assert.ok(html.includes(email));
+    assert.ok(html.includes(labels[role]));
+    assert.equal(html.includes("Workspace members"), role === "admin");
+    assert.doesNotMatch(html, /Preview a role|<select/);
   }
 });
 

@@ -239,12 +239,23 @@ try {
     (await read(a, "records", "students:" + id)).value.removedAt,
     undefined,
   );
-  const previewRole = async (role) => {
+  // Exercise actual roles against the local fictional workspace.
+  const useAccount = async (role) => {
+    const origin = new URL(a.url()).origin;
+    assert.equal(origin, "http://127.0.0.1:8787");
+    const email = role + "@roles.local.demo";
+    if (role !== "admin") {
+      const member = await b.request.post(origin + "/api/members", { data: { email, role } });
+      assert.ok(member.ok());
+    }
+    await a.context().setExtraHTTPHeaders(role === "admin" ? {} : {"oai-authenticated-user-email": email});
+    await pull(a);
     await a.getByLabel("Workspace settings", { exact: true }).click();
-    await a.getByLabel("Preview a role").selectOption(role);
+    await a.getByText(role === "admin" ? "Tutor · Administrator" : role === "staff" ? "Attendance staff" : "Reports viewer", {exact:true}).waitFor();
+    assert.equal(await a.getByRole("button", { name: "Workspace members", exact:true }).count(), role === "admin" ? 1 : 0);
     await a.getByRole("button", { name: "Close dialog", exact: true }).click();
   };
-  await previewRole("staff");
+  await useAccount("staff");
   await a.locator(".bottom-nav button").nth(2).click();
   await a.getByRole("button", { name: "New student", exact: true }).waitFor();
   assert.equal(await a.getByLabel("Show archived").count(), 0);
@@ -276,14 +287,14 @@ try {
   await a.getByRole("button", { name: "Manage tutes", exact: true }).click();
   assert.equal(await a.getByLabel("Lesson title").isEnabled(), true);
   await a.getByRole("button", { name: "Close dialog", exact: true }).click();
-  await previewRole("viewer");
+  await useAccount("viewer");
   await a.locator(".bottom-nav button").nth(2).click();
   assert.equal(
     await a.getByRole("button", { name: "New student", exact: true }).count(),
     0,
   );
   assert.equal(await a.getByLabel("Show archived").count(), 0);
-  await previewRole("admin");
+  await useAccount("admin");
   await a.screenshot({ path: "work/removal-check.png", fullPage: true });
   assert.deepEqual(errors, []);
   console.log(
