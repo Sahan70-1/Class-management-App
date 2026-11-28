@@ -13,7 +13,7 @@ test("admin membership controls, device observations, and retained activity on r
       scriptPath: "dist/server/index.js",
       compatibilityDate: "2026-10-01",
       d1Databases: ["DB"],
-      bindings: { INITIAL_ADMIN_EMAIL: admin },
+      bindings: { INITIAL_ADMIN_EMAIL: admin, SEED_DEMO: "true" },
     }),
   );
   try {

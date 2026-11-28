@@ -1,7 +1,6 @@
 import { openDB } from 'idb';
 import { canWrite,validateProfile,validateClass,validateStudentRemoval,recordId,type StoredRecord,type Operation,type Entity,type EntityMap,type History,type Role } from './model';
-import {seedRecords} from './seed';
-const database=openDB('classroom-v1',1,{upgrade(db){db.createObjectStore('records',{keyPath:'id'});db.createObjectStore('outbox',{keyPath:'id'});db.createObjectStore('meta');}});
+const database=openDB('classroom-live-v2',1,{upgrade(db){db.createObjectStore('records',{keyPath:'id'});db.createObjectStore('outbox',{keyPath:'id'});db.createObjectStore('meta');}});
 export interface StoreState {accessMessage:string|null;records:StoredRecord[];pending:Operation[];history:History[];lastSync:string|null;role:Role;email:string;syncing:boolean;error:string|null;online:boolean;ready:boolean;conflicts:string[]}
 let state:StoreState={accessMessage:null,records:[],pending:[],history:[],lastSync:null,role:'admin',email:'Tutor workspace',syncing:false,error:null,online:navigator.onLine,ready:false,conflicts:[]};
 const listeners=new Set<()=>void>();
@@ -27,7 +26,7 @@ async function getInstallationId(): Promise<string> {
   return installationId;
 }
 
-export async function initialize(){const db=await database;if(!await db.get('meta','initialized')){const tx=db.transaction(['records','meta'],'readwrite');for(const r of seedRecords())await tx.objectStore('records').put({...r,id:recordId(r.entity,r.key)});await tx.objectStore('meta').put(true,'initialized');await tx.done;}
+export async function initialize(){const db=await database;
  const accessMessage = await db.get('meta', 'accessMessage') || null;
  publish({accessMessage,records:accessMessage ? [] : await db.getAll('records'),pending:accessMessage ? [] : await db.getAll('outbox'),history:accessMessage ? [] : await db.get('meta','history')||[],lastSync:await db.get('meta','lastSync')||null,role:await db.get('meta','role')||'admin',email:await db.get('meta','email')||'Tutor workspace',ready:true});await sync();}
 let lastOperationTime=0;
@@ -62,7 +61,7 @@ async function performSync(){
    const headers: Record<string,string> = {'Content-Type':'application/json', 'X-Classroom-Device': deviceId};
    if (author) headers['X-Classroom-Account'] = author;
    const response = await fetch('/api/sync', {
-     method:'POST', headers, body:JSON.stringify({operations,lastSeq,includeProfiles:true}), signal:AbortSignal.timeout(18000),
+     method:'POST', headers, body:JSON.stringify({workspaceVersion:2,operations,lastSeq,includeProfiles:true}), signal:AbortSignal.timeout(18000),
    });
    if (!response.ok) {
      if (response.status === 403 || response.status === 409) {

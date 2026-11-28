@@ -22,7 +22,7 @@ test("removal and restoration enforce roles, retain history, sync as deltas, and
       scriptPath: "dist/server/index.js",
       compatibilityDate: "2026-10-01",
       d1Databases: ["DB"],
-      bindings: { LOCAL_DEMO: "true" },
+      bindings: { LOCAL_DEMO: "true", SEED_DEMO: "true" },
     }),
   );
   try {
@@ -209,7 +209,7 @@ test("removal and restoration enforce roles, retain history, sync as deltas, and
     assert.equal(
       (
         (await db
-          .prepare("SELECT COUNT(*) AS n FROM events WHERE operation_id=?")
+          .prepare("SELECT COUNT(*) AS n FROM classroom_events WHERE operation_id=?")
           .bind(removeOp.id)
           .first()) as any
       ).n,

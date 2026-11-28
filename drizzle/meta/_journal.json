@@ -15,6 +15,13 @@
       "when": 1795278099636,
       "tag": "0001_member_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795870862453,
+      "tag": "0002_clean_workspace",
+      "breakpoints": true
     }
   ]
 }

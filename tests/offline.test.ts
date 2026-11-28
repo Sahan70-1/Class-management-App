@@ -10,7 +10,7 @@ test('offline action is durable, independent, retained on failure, and acknowled
  const store=await import('../src/store');await store.initialize();const day=todayISO();
  const attendance={id:'S-00001@weekly-9@'+day,studentId:'S-00001',sessionId:'weekly-9@'+day,classId:'grade-9',date:day,at:new Date().toISOString()};
  await store.mutate('attendance',attendance,'staff');await store.sync();
- const db=await openDB('classroom-v1',1);assert.equal(await db.count('outbox'),1);assert.equal((await db.get('records','attendance:'+attendance.id)).value.studentId,'S-00001');
+ const db=await openDB('classroom-live-v2',1);assert.equal(await db.count('outbox'),1);assert.equal((await db.get('records','attendance:'+attendance.id)).value.studentId,'S-00001');
  assert.equal(store.getSnapshot().records.some(r=>r.entity==='fees'&&(r.value as any).studentId==='S-00001'),false);assert.equal(store.getSnapshot().records.some(r=>r.entity==='issues'&&(r.value as any).studentId==='S-00001'),false);
  (navigator as any).onLine=true;globalThis.fetch=async()=>{throw Error('Network interrupted');};await store.sync();assert.equal(await db.count('outbox'),1);assert.equal(store.getSnapshot().lastSync,null);
  globalThis.fetch=async(_input,init)=>{const {operations}=JSON.parse(init!.body as string) as {operations:Operation[]};return Response.json({accepted:operations.map(o=>o.id),conflicts:[],records:[...seedRecords(),...operations],lastSeq:1,full:true,history:[],role:'staff',email:'staff@example.com'});};

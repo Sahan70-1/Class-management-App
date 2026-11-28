@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {Miniflare,convertV4MiniflareOptions} from 'miniflare';
 import {todayISO,type Operation} from '../src/model';
 test('sync persists independent actions, retries safely, protects roles, and rejects schedule conflicts',async()=>{
- const mf=new Miniflare(convertV4MiniflareOptions({modules:true,scriptPath:'dist/server/index.js',compatibilityDate:'2026-10-01',d1Databases:['DB'],bindings:{LOCAL_DEMO:'true'}}));
+ const mf=new Miniflare(convertV4MiniflareOptions({modules:true,scriptPath:'dist/server/index.js',compatibilityDate:'2026-10-01',d1Databases:['DB'],bindings:{LOCAL_DEMO:'true',SEED_DEMO:'true'}}));
  try{
  const db=await mf.getD1Database('DB');const journal=JSON.parse(await readFile('drizzle/meta/_journal.json','utf8'));for(const entry of journal.entries){const sql=await readFile('drizzle/'+entry.tag+'.sql','utf8');await db.batch(sql.split('--> statement-breakpoint').map((statement:string)=>db.prepare(statement.trim())).filter(Boolean));}
  const request=async(path:string,body:unknown,email='tutor@local.demo')=>{const response=await mf.dispatchFetch('http://localhost'+path,{method:'POST',headers:{'Content-Type':'application/json','oai-authenticated-user-email':email},body:JSON.stringify(body)});return {status:response.status,body:await response.json() as any};};
@@ -47,7 +47,7 @@ test('sync persists independent actions, retries safely, protects roles, and rej
  assert.deepEqual(changed.records.map((r:any)=>r.key),[pupil.key]);assert.ok(changed.lastSeq>cursor);
  const replay=(await request('/api/sync',{operations:[change],lastSeq:changed.lastSeq})).body;
  assert.deepEqual(replay.accepted,[change.id]);assert.deepEqual(replay.records,[]);assert.equal(replay.lastSeq,changed.lastSeq);
- assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM events WHERE operation_id=?').bind(change.id).first() as any).n,1);
+ assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM classroom_events WHERE operation_id=?').bind(change.id).first() as any).n,1);
  const deviceB=(await request('/api/sync',{operations:[],lastSeq:cursor})).body;
  assert.deepEqual(deviceB.records,changed.records);
  // Concurrent changes to different records converge, including a replacement of an existing value.
@@ -57,7 +57,7 @@ test('sync persists independent actions, retries safely, protects roles, and rej
  const b=(await request('/api/sync',{operations:[],lastSeq:deviceB.lastSeq})).body;
  assert.deepEqual(a.records,b.records);assert.equal(a.lastSeq,b.lastSeq);assert.equal(a.records.length,2);
  // Deletes are not exposed by the API, but an event-backed removal is a tombstone.
- await db.batch([db.prepare("INSERT INTO events(operation_id,entity,record_key,at,actor,description,value) VALUES(?,?,?,?,?,?,?)").bind(crypto.randomUUID(),'students',pupil.key,new Date().toISOString(),'tutor@local.demo','Removed','null'),db.prepare('DELETE FROM records WHERE entity=? AND record_key=?').bind('students',pupil.key)]);
+ await db.batch([db.prepare("INSERT INTO classroom_events(operation_id,entity,record_key,at,actor,description,value) VALUES(?,?,?,?,?,?,?)").bind(crypto.randomUUID(),'students',pupil.key,new Date().toISOString(),'tutor@local.demo','Removed','null'),db.prepare('DELETE FROM classroom_records WHERE entity=? AND record_key=?').bind('students',pupil.key)]);
  const removed=(await request('/api/sync',{operations:[],lastSeq:a.lastSeq})).body;
  assert.deepEqual(removed.records,[]);assert.deepEqual(removed.deleted,[{entity:'students',key:pupil.key}]);
  const reset=(await request('/api/sync',{operations:[],lastSeq:removed.lastSeq+100})).body;

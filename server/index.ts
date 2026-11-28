@@ -1,11 +1,11 @@
 import {deviceObservation, manageMembers} from "./members";
 import {seedRecords} from '../src/seed';
 import {canWrite,validateProfile,validateClass,validateStudentRemoval,values,sessionsFor,findConflict,overlaps,recordId,type StoredRecord,type Operation,type Role,type Entity,type Tute,type Issue,type Schedule,type Override} from '../src/model';
-interface Env { DB:D1Database; ASSETS:Fetcher; LOCAL_DEMO?:string; INITIAL_ADMIN_EMAIL?:string }
+interface Env { DB:D1Database; ASSETS:Fetcher; LOCAL_DEMO?:string; SEED_DEMO?:string; INITIAL_ADMIN_EMAIL?:string }
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store'}});
 const validDate=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!isNaN(Date.parse(v));
 const validTime=(v:unknown)=>typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v);
-async function records(db:D1Database):Promise<StoredRecord[]>{const result=await db.prepare('SELECT entity, record_key AS key, value, revision FROM records').all();return result.results.map((r:any)=>({...r,value:JSON.parse(r.value)}));}
+async function records(db:D1Database):Promise<StoredRecord[]>{const result=await db.prepare('SELECT entity, record_key AS key, value, revision FROM classroom_records').all();return result.results.map((r:any)=>({...r,value:JSON.parse(r.value)}));}
 function validate(op:Operation,all:StoredRecord[],role:Role,actor:string):string|null{
  if(!op||typeof op.id!=='string'||op.id.length>100||typeof op.key!=='string'||op.key.length>250||!op.value||op.key!==op.value.id||!Number.isInteger(op.baseRevision)||JSON.stringify(op.value).length>650000)return 'Invalid operation.';
  if(!canWrite(role,op.entity,all.some(r=>r.entity===op.entity&&r.key===op.key),op.value))return 'Your role does not allow this operation.';
@@ -46,13 +46,25 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  if(Number(request.headers.get('content-length'))>2500000)return json({error:'Request too large.'},413);
  const body:any=await request.json();if(!Array.isArray(body.operations)||body.operations.length>100)return json({error:'Invalid batch.'},400);
  const lastSeq=body.lastSeq??0;if(!Number.isSafeInteger(lastSeq)||lastSeq<0)return json({error:'Invalid sync cursor.'},400);
- const existing=await env.DB.prepare('SELECT COUNT(*) AS count FROM records').first<{count:number}>();if(!existing?.count&&role==='admin'){await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO schedule_lock(id,revision) VALUES(1,0)'),...seedRecords().map(r=>env.DB.prepare('INSERT OR IGNORE INTO records(entity,record_key,value,revision) VALUES(?,?,?,?)').bind(r.entity,r.key,JSON.stringify(r.value),r.revision))]);}
+ // Older installed clients may still have queued writes from the archived workspace.
+ if(body.workspaceVersion!==2 && env.SEED_DEMO!=='true')return json({error:'Reopen Classroom online to use the current workspace.'},409);
+ const populated=await env.DB.prepare('SELECT 1 FROM classroom_records LIMIT 1').first();
+ if(!populated){
+   const setup=[
+     env.DB.prepare('INSERT OR IGNORE INTO schedule_lock(id,revision) VALUES(1,0)'),
+     env.DB.prepare("INSERT OR IGNORE INTO classroom_records(entity,record_key,value,revision) SELECT entity,record_key,value,revision FROM records WHERE entity='profiles'"),
+   ];
+   if(env.SEED_DEMO==='true' && role==='admin') {
+     setup.push(...seedRecords().map(r=>env.DB.prepare('INSERT OR IGNORE INTO classroom_records(entity,record_key,value,revision) VALUES(?,?,?,?)').bind(r.entity,r.key,JSON.stringify(r.value),r.revision)));
+   }
+   await env.DB.batch(setup);
+ }
  let all=await records(env.DB);const accepted:string[]=[],conflicts:{id:string;message:string}[]=[];
  for(const op of body.operations as Operation[]){
  const scheduleOperation=op.entity==='schedules'||op.entity==='overrides';
  const epoch=scheduleOperation?(await env.DB.prepare('SELECT revision FROM schedule_lock WHERE id=1').first<{revision:number}>())!.revision:0;
  if(scheduleOperation)all=await records(env.DB);
- if(op&&typeof op.id==='string'&&canWrite(role,op.entity)){const duplicate=await env.DB.prepare('SELECT 1 FROM events WHERE operation_id=? AND actor=?').bind(op.id,email).first();if(duplicate){accepted.push(op.id);continue;}}
+ if(op&&typeof op.id==='string'&&canWrite(role,op.entity)){const duplicate=await env.DB.prepare('SELECT 1 FROM classroom_events WHERE operation_id=? AND actor=?').bind(op.id,email).first();if(duplicate){accepted.push(op.id);continue;}}
  const error=validate(op,all,role,email);if(error){conflicts.push({id:op?.id||'unknown',message:error});continue;}
 
  const current=all.find(r=>r.entity===op.entity&&r.key===op.key);
@@ -66,10 +78,10 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  const issueTuteId=op.entity==='issues'?(op.value as Issue).tuteId:null;
  const payload=JSON.stringify(op.value);
  const result=await env.DB.batch([
- env.DB.prepare(`INSERT OR IGNORE INTO events(operation_id,entity,record_key,at,actor,description,value) SELECT ?,?,?,?,?,?,? WHERE COALESCE((SELECT revision FROM records WHERE entity=? AND record_key=?),0)=? AND (?=0 OR (SELECT revision FROM schedule_lock WHERE id=1)=?)
- AND (? IS NULL OR EXISTS(SELECT 1 FROM records WHERE entity='tutes' AND record_key=? AND NOT COALESCE(json_extract(value,'$.deleted'),0)))`).bind(op.id,op.entity,op.key,at,email,description,payload,op.entity,op.key,op.baseRevision,scheduleOperation?1:0,epoch,issueTuteId,issueTuteId),
- env.DB.prepare('INSERT INTO records(entity,record_key,value,revision) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM events WHERE operation_id=?) ON CONFLICT(entity,record_key) DO UPDATE SET value=excluded.value,revision=excluded.revision').bind(op.entity,op.key,payload,op.baseRevision+1,op.id),
- env.DB.prepare('UPDATE schedule_lock SET revision=revision+1 WHERE id=1 AND ?=1 AND EXISTS(SELECT 1 FROM events WHERE operation_id=?)').bind(scheduleOperation?1:0,op.id)
+ env.DB.prepare(`INSERT OR IGNORE INTO classroom_events(operation_id,entity,record_key,at,actor,description,value) SELECT ?,?,?,?,?,?,? WHERE COALESCE((SELECT revision FROM classroom_records WHERE entity=? AND record_key=?),0)=? AND (?=0 OR (SELECT revision FROM schedule_lock WHERE id=1)=?)
+ AND (? IS NULL OR EXISTS(SELECT 1 FROM classroom_records WHERE entity='tutes' AND record_key=? AND NOT COALESCE(json_extract(value,'$.deleted'),0)))`).bind(op.id,op.entity,op.key,at,email,description,payload,op.entity,op.key,op.baseRevision,scheduleOperation?1:0,epoch,issueTuteId,issueTuteId),
+ env.DB.prepare('INSERT INTO classroom_records(entity,record_key,value,revision) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM classroom_events WHERE operation_id=?) ON CONFLICT(entity,record_key) DO UPDATE SET value=excluded.value,revision=excluded.revision').bind(op.entity,op.key,payload,op.baseRevision+1,op.id),
+ env.DB.prepare('UPDATE schedule_lock SET revision=revision+1 WHERE id=1 AND ?=1 AND EXISTS(SELECT 1 FROM classroom_events WHERE operation_id=?)').bind(scheduleOperation?1:0,op.id)
  ]);
  if(!result[0].meta.changes){conflicts.push({id:op.id,message:'This record changed during sync. Review the newest version.'});continue;}
  accepted.push(op.id);all=[...all.filter(r=>recordId(r.entity,r.key)!==recordId(op.entity,op.key)),{entity:op.entity,key:op.key,value:op.value,revision:op.baseRevision+1}];
@@ -77,16 +89,16 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  // D1 batches are transactional: records and cursor must describe the same snapshot.
  const device=deviceObservation(request,env.DB,email);
  const snapshot=await env.DB.batch([
- env.DB.prepare('SELECT COALESCE(MAX(seq),0) AS seq FROM events'),
- env.DB.prepare(`WITH latest AS (SELECT entity,record_key,MAX(seq) AS seq FROM events GROUP BY entity,record_key)
- SELECT r.entity,r.record_key AS key,r.value,r.revision FROM records r
+ env.DB.prepare('SELECT COALESCE(MAX(seq),0) AS seq FROM classroom_events'),
+ env.DB.prepare(`WITH latest AS (SELECT entity,record_key,MAX(seq) AS seq FROM classroom_events GROUP BY entity,record_key)
+ SELECT r.entity,r.record_key AS key,r.value,r.revision FROM classroom_records r
  LEFT JOIN latest e ON e.entity=r.entity AND e.record_key=r.record_key
- WHERE ?=0 OR ?>COALESCE((SELECT MAX(seq) FROM events),0) OR e.seq>?`).bind(lastSeq,lastSeq,lastSeq),
+ WHERE ?=0 OR ?>COALESCE((SELECT MAX(seq) FROM classroom_events),0) OR e.seq>?`).bind(lastSeq,lastSeq,lastSeq),
  // No delete API currently exists. Event-backed removals are returned as tombstones.
- env.DB.prepare(`SELECT e.entity,e.record_key AS key FROM events e
- LEFT JOIN records r ON r.entity=e.entity AND r.record_key=e.record_key
+ env.DB.prepare(`SELECT e.entity,e.record_key AS key FROM classroom_events e
+ LEFT JOIN classroom_records r ON r.entity=e.entity AND r.record_key=e.record_key
  WHERE e.seq>? AND r.record_key IS NULL GROUP BY e.entity,e.record_key`).bind(lastSeq),
- env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM events ORDER BY seq DESC LIMIT 200'),
+ env.DB.prepare('SELECT operation_id AS id,entity,record_key AS key,at,actor,description FROM classroom_events ORDER BY seq DESC LIMIT 200'),
  ...(device?[device]:[])
  ]);
  const nextSeq=Number((snapshot[0].results[0] as {seq:number}).seq);

@@ -11,3 +11,7 @@ export const memberDevices = sqliteTable('member_devices', {
   label: text('label').notNull(),
   lastSeen: text('last_seen').notNull(),
 }, table => [primaryKey({ columns: [table.email, table.deviceId] })]);
+
+// The previous teaching workspace remains available as a private recovery snapshot.
+export const classroomRecords=sqliteTable('classroom_records',{entity:text('entity').notNull(),recordKey:text('record_key').notNull(),value:text('value').notNull(),revision:integer('revision').notNull().default(1)},table=>[primaryKey({columns:[table.entity,table.recordKey]})]);
+export const classroomEvents=sqliteTable('classroom_events',{seq:integer('seq').primaryKey({autoIncrement:true}),operationId:text('operation_id').notNull().unique(),entity:text('entity').notNull(),recordKey:text('record_key').notNull(),at:text('at').notNull(),actor:text('actor').notNull(),description:text('description').notNull(),value:text('value').notNull()},table=>[index('classroom_events_entity').on(table.entity,table.seq)]);

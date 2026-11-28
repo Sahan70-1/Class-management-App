@@ -56,7 +56,7 @@ export function App() {
     [editing, setEditing] = useState<Session | null>(null),
     [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all"),
-    [reportClass, setReportClass] = useState("grade-9"),
+    [selectedReportClass, setReportClass] = useState(""),
     [reportMonth, setReportMonth] = useState(monthOf(today)),
     [reportType, setReportType] = useState("attendance"),
     [toast, setToast] = useState(""),
@@ -77,6 +77,7 @@ export function App() {
     allTutes = values(data.records, "tutes"),
     tutes = allTutes.filter((t) => !t.deleted),
     issues = values(data.records, "issues");
+  const reportClass = classes.some(c => c.id === selectedReportClass) ? selectedReportClass : classes[0]?.id || "";
   const profiles = values(data.records, "profiles");
   const myPhoto = profiles.find((p) => p.id === data.email)?.photo;
   const enrolled = activeStudentsOnly(students);

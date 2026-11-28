@@ -25,7 +25,7 @@ try {
     p.evaluate(
       ({ store, key }) =>
         new Promise((resolve) => {
-          const r = indexedDB.open("classroom-v1");
+          const r = indexedDB.open("classroom-live-v2");
           r.onsuccess = () => {
             const db = r.result,
               q =
@@ -44,7 +44,7 @@ try {
     p.waitForFunction(
       ({ id, removed }) =>
         new Promise((resolve) => {
-          const r = indexedDB.open("classroom-v1");
+          const r = indexedDB.open("classroom-live-v2");
           r.onsuccess = () => {
             const db = r.result,
               q = db
@@ -63,7 +63,7 @@ try {
     p.waitForFunction(
       () =>
         new Promise((resolve) => {
-          const r = indexedDB.open("classroom-v1");
+          const r = indexedDB.open("classroom-live-v2");
           r.onsuccess = () => {
             const db = r.result,
               tx = db.transaction(["outbox", "meta"]),
@@ -83,7 +83,7 @@ try {
     await p.waitForFunction(
       (expected) =>
         new Promise((resolve) => {
-          const r = indexedDB.open("classroom-v1");
+          const r = indexedDB.open("classroom-live-v2");
           r.onsuccess = () => {
             const db = r.result,
               tx = db.transaction(["records", "meta"]),

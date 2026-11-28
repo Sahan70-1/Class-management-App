@@ -140,3 +140,7 @@ Removed students disappear from active directories, check-in search, rosters, se
 Removal and restoration are normal versioned student operations in the atomic IndexedDB/outbox path. They work offline, propagate as ordinary one-record incremental sync updates, and use the existing conflict review when another device changes the same student. The sync protocol, snapshot/cursor batch, tombstones, full-refresh recovery and local delta merge are unchanged.
 
 Run `scripts/check-removal.mjs` with the optional Playwright setup above to verify offline removal, reload persistence, removed QR rejection, incremental propagation, history retention and restoration between two isolated browser sessions on the local preview.
+
+### Clean teaching workspace
+
+The original records and events tables are a private recovery copy of the teaching data before the November 2026 reset. The app now reads and writes classroom_records and classroom_events. Membership and device information use the same tables as before. Old offline queues remain isolated in the previous browser database. Production starts without sample teaching data. Local test fixtures require the explicit SEED_DEMO binding.
